@@ -1,10 +1,18 @@
 package service
 
-import "itfest-2025/internal/repository"
+import (
+	"itfest-2025/internal/repository"
+	"itfest-2025/pkg/bcrypt"
+	"itfest-2025/pkg/jwt"
+	"itfest-2025/pkg/supabase"
+)
 
 type Service struct {
+	UserService IUserService
 }
 
-func NewService(repository *repository.Repository) *Service {
-	return &Service{}
+func NewService(repository *repository.Repository, bcrypt bcrypt.Interface, jwtAuth jwt.Interface, supabase supabase.Interface) *Service {
+	return &Service{
+		UserService: NewUserService(repository.UserRepository, repository.TeamRepository, bcrypt, jwtAuth, supabase),
+	}
 }
