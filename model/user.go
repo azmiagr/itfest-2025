@@ -27,3 +27,10 @@ type LoginResponse struct {
 	Token  string    `json:"token"`
 	RoleID int       `json:"role_id"`
 }
+
+type UserParam struct {
+	UserID   uuid.UUID `json:"-"`
+	Email    string    `json:"-"`
+	Password string    `json:"-"`
+	RoleID   int       `json:"-"`
+}

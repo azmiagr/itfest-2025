@@ -23,6 +23,7 @@ func NewRest(service *service.Service) *Rest {
 func (r *Rest) MountEndpoint() {
 	routerGroup := r.router.Group("api/v1")
 	routerGroup.POST("/register", r.Register)
+	routerGroup.POST("/login", r.Login)
 	routerGroup.POST("/upload-payment/:userID", r.UploadPayment)
 }
 

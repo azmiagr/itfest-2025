@@ -31,10 +31,28 @@ func (r *Rest) Register(c *gin.Context) {
 
 }
 
+func (r *Rest) Login(c *gin.Context) {
+	param := model.UserLogin{}
+
+	err := c.ShouldBindJSON(&param)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "failed to bind input", err)
+		return
+	}
+
+	result, err := r.service.UserService.Login(param)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to login user", err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "success to login user", result)
+}
+
 func (r *Rest) UploadPayment(c *gin.Context) {
 	userID := c.Param("userID")
 
-	_, err := uuid.Parse(userID)
+	parseID, err := uuid.Parse(userID)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "invalid user ID", err)
 		return
@@ -46,12 +64,12 @@ func (r *Rest) UploadPayment(c *gin.Context) {
 		return
 	}
 
-	signedURL, err := r.service.UserService.UploadPayment(userID, paymentFile)
+	publicURL, err := r.service.UserService.UploadPayment(parseID, paymentFile)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "failed to upload payment", err)
 		return
 	}
 
-	response.Success(c, http.StatusOK, "success to upload payment", signedURL)
+	response.Success(c, http.StatusOK, "success to upload payment", publicURL)
 
 }

@@ -16,7 +16,9 @@ import (
 
 type IUserService interface {
 	Register(param *model.UserRegister) (string, error)
-	UploadPayment(userID string, file *multipart.FileHeader) (string, error)
+	Login(param model.UserLogin) (model.LoginResponse, error)
+	UploadPayment(userID uuid.UUID, file *multipart.FileHeader) (string, error)
+	GetUserByID(param model.UserParam) (*entity.User, error)
 }
 
 type UserService struct {
@@ -92,13 +94,38 @@ func (u *UserService) Register(param *model.UserRegister) (string, error) {
 
 }
 
-func (u *UserService) UploadPayment(userID string, file *multipart.FileHeader) (string, error) {
-	parsedID, err := uuid.Parse(userID)
+func (u *UserService) Login(param model.UserLogin) (model.LoginResponse, error) {
+	var result model.LoginResponse
+
+	user, err := u.UserRepository.GetUser(model.UserParam{
+		Email: param.Email,
+	})
+
 	if err != nil {
-		return "", err
+		return result, err
 	}
 
-	user, err := u.UserRepository.GetUserByID(parsedID)
+	err = u.BCrypt.CompareAndHashPassword(user.Password, param.Password)
+	if err != nil {
+		return result, err
+	}
+
+	token, err := u.JwtAuth.CreateJWTToken(user.UserID)
+	if err != nil {
+		return result, errors.New("failed to create token")
+	}
+
+	result.UserID = user.UserID
+	result.Token = token
+	result.RoleID = user.RoleID
+
+	return result, nil
+}
+
+func (u *UserService) UploadPayment(userID uuid.UUID, file *multipart.FileHeader) (string, error) {
+	user, err := u.UserRepository.GetUserByID(model.UserParam{
+		UserID: userID,
+	})
 	if err != nil {
 		return "", errors.New("user not found")
 	}
@@ -116,4 +143,8 @@ func (u *UserService) UploadPayment(userID string, file *multipart.FileHeader) (
 	}
 
 	return signedURL, nil
+}
+
+func (u *UserService) GetUserByID(param model.UserParam) (*entity.User, error) {
+	return u.UserRepository.GetUserByID(param)
 }

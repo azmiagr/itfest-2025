@@ -2,14 +2,15 @@ package repository
 
 import (
 	"itfest-2025/entity"
+	"itfest-2025/model"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type IUserRepository interface {
 	CreateUser(user *entity.User) (*entity.User, error)
-	GetUserByID(userID uuid.UUID) (*entity.User, error)
+	GetUserByID(param model.UserParam) (*entity.User, error)
+	GetUser(param model.UserParam) (*entity.User, error)
 	UpdateUser(user *entity.User) error
 }
 
@@ -32,9 +33,19 @@ func (u *UserRepository) CreateUser(user *entity.User) (*entity.User, error) {
 	return user, nil
 }
 
-func (u *UserRepository) GetUserByID(userID uuid.UUID) (*entity.User, error) {
+func (u *UserRepository) GetUserByID(param model.UserParam) (*entity.User, error) {
 	var user entity.User
-	err := u.db.Debug().Where("user_id = ?", userID).First(&user).Error
+	err := u.db.Debug().Preload("Team").Where("user_id = ?", param.UserID).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (u *UserRepository) GetUser(param model.UserParam) (*entity.User, error) {
+	user := entity.User{}
+	err := u.db.Debug().Preload("Team").Where(&param).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
