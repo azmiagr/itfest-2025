@@ -14,8 +14,11 @@ type User struct {
 	PhoneNumber   string    `json:"phone_number" gorm:"type:varchar(15)"`
 	GdriveLink    string    `json:"gdrive_link" gorm:"type:varchar(100)"`
 	PaymentTransc string    `json:"payment_transc" gorm:"type:text"`
+	StatusAccount string    `json:"-" gorm:"type:enum('inactive', 'active');not null"`
 	RoleID        int       `json:"role_id"`
 	CreatedAt     time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt     time.Time `json:"updated_at" gorm:"autoUpdateTime"`
-	Team          Team      `json:"team" gorm:"foreignKey:UserID"`
+
+	Team    Team      `json:"team" gorm:"foreignKey:UserID"`
+	OtpCode []OtpCode `json:"otp_code" gorm:"foreignKey:UserID"`
 }

@@ -73,3 +73,29 @@ func (r *Rest) UploadPayment(c *gin.Context) {
 	response.Success(c, http.StatusOK, "success to upload payment", publicURL)
 
 }
+
+func (r *Rest) VerifyUser(c *gin.Context) {
+	var param model.VerifyUser
+	err := c.ShouldBindJSON(&param)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "failed to bind input", err)
+		return
+	}
+
+	err = r.service.UserService.VerifyUser(param)
+	if err != nil {
+		if err.Error() == "invalid otp code" {
+			response.Error(c, http.StatusUnauthorized, "otp code is wrong", err)
+			return
+		} else if err.Error() == "otp expired" {
+			response.Error(c, http.StatusUnauthorized, "otp code is expired", err)
+			return
+		} else {
+			response.Error(c, http.StatusInternalServerError, "failed to verify user", err)
+			return
+		}
+	}
+
+	response.Success(c, http.StatusOK, "success to verify user", nil)
+
+}

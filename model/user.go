@@ -34,3 +34,8 @@ type UserParam struct {
 	Password string    `json:"-"`
 	RoleID   int       `json:"-"`
 }
+
+type VerifyUser struct {
+	UserID  uuid.UUID `json:"user_id" binding:"required"`
+	OtpCode string    `json:"otp_code" binding:"required"`
+}
