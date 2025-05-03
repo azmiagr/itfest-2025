@@ -23,6 +23,7 @@ type IUserService interface {
 	Login(param model.UserLogin) (model.LoginResponse, error)
 	UploadPayment(userID uuid.UUID, file *multipart.FileHeader) (string, error)
 	VerifyUser(param model.VerifyUser) error
+	GetUser(param model.UserParam) (*entity.User, error)
 }
 
 type UserService struct {
@@ -218,4 +219,8 @@ func (u *UserService) VerifyUser(param model.VerifyUser) error {
 	}
 
 	return nil
+}
+
+func (u *UserService) GetUser(param model.UserParam) (*entity.User, error) {
+	return u.UserRepository.GetUser(param)
 }
