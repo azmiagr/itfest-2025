@@ -26,7 +26,7 @@ func NewOtpRepository(db *gorm.DB) IOtpRepository {
 
 func (o *OtpRepository) GetOtp(tx *gorm.DB, param model.GetOtp) (*entity.OtpCode, error) {
 	var otp *entity.OtpCode
-	err := o.db.Debug().Where(&param).First(&otp).Error
+	err := tx.Debug().Where(&param).First(&otp).Error
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func (o *OtpRepository) GetOtp(tx *gorm.DB, param model.GetOtp) (*entity.OtpCode
 }
 
 func (o *OtpRepository) CreateOtp(tx *gorm.DB, otp *entity.OtpCode) error {
-	err := o.db.Debug().Create(otp).Error
+	err := tx.Debug().Create(otp).Error
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func (o *OtpRepository) CreateOtp(tx *gorm.DB, otp *entity.OtpCode) error {
 }
 
 func (o *OtpRepository) UpdateOtp(tx *gorm.DB, otp *entity.OtpCode) error {
-	err := o.db.Debug().Updates(otp).Error
+	err := tx.Debug().Updates(otp).Error
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (o *OtpRepository) UpdateOtp(tx *gorm.DB, otp *entity.OtpCode) error {
 }
 
 func (o *OtpRepository) DeleteOtp(tx *gorm.DB, otp *entity.OtpCode) error {
-	err := o.db.Debug().Delete(otp).Error
+	err := tx.Debug().Delete(otp).Error
 	if err != nil {
 		return err
 	}

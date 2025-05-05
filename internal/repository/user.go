@@ -24,7 +24,7 @@ func NewUserRepository(db *gorm.DB) IUserRepository {
 }
 
 func (u *UserRepository) CreateUser(tx *gorm.DB, user *entity.User) (*entity.User, error) {
-	err := u.db.Debug().Create(&user).Error
+	err := tx.Create(&user).Error
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func (u *UserRepository) GetUser(param model.UserParam) (*entity.User, error) {
 }
 
 func (u *UserRepository) UpdateUser(tx *gorm.DB, user *entity.User) error {
-	err := u.db.Debug().Where("user_id = ?", user.UserID).Updates(&user).Error
+	err := tx.Where("user_id = ?", user.UserID).Updates(&user).Error
 	if err != nil {
 		return err
 	}
