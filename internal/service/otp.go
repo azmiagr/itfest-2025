@@ -52,7 +52,7 @@ func (o *OtpService) ResendOtp(param model.GetOtp) error {
 		return err
 	}
 
-	if otp.CreatedAt.After(time.Now().Add(-5 * time.Minute)) {
+	if otp.UpdatedAt.After(time.Now().UTC().Add(-5 * time.Minute)) {
 		return errors.New("you can only resend otp every 5 minutes")
 	}
 

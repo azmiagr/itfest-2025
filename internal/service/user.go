@@ -226,8 +226,8 @@ func (u *UserService) VerifyUser(param model.VerifyUser) error {
 		return err
 	}
 
-	expiredThreshold := time.Now().Add(-time.Duration(expiredTime) * time.Minute)
-	if otp.CreatedAt.Before(expiredThreshold) {
+	expiredThreshold := time.Now().UTC().Add(-time.Duration(expiredTime) * time.Minute)
+	if otp.UpdatedAt.Before(expiredThreshold) {
 		return errors.New("otp expired")
 	}
 
