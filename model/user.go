@@ -3,14 +3,15 @@ package model
 import "github.com/google/uuid"
 
 type UserRegister struct {
-	Username      string `json:"username" binding:"required"`
-	Email         string `json:"email" binding:"required,email"`
-	Password      string `json:"password" binding:"required,min=8"`
-	TeamName      string `json:"team_name" binding:"required"`
-	PhoneNumber   string `json:"phone_number" binding:"required"`
-	University    string `json:"university" binding:"required"`
-	GdriveLink    string `json:"gdrive_link" binding:"required"`
-	PaymentTransc string `json:"payment_transc"`
+	FullName         string `json:"full_Name" binding:"required"`
+	Email            string `json:"email" binding:"required,email"`
+	Password         string `json:"password" binding:"required,min=8"`
+	StudentNumber    string `json:"student_number" binding:"required"`
+	TeamName         string `json:"team_name" binding:"required"`
+	Major            string `json:"major" binding:"required"`
+	University       string `json:"university" binding:"required"`
+	RegistrationLink string `json:"gdrive_link" binding:"required"`
+	PaymentTransc    string `json:"payment_transc"`
 }
 
 type RegisterResponse struct {

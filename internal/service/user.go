@@ -73,15 +73,15 @@ func (u *UserService) Register(param *model.UserRegister) (string, error) {
 	}
 
 	user := &entity.User{
-		UserID:        id,
-		Username:      param.Username,
-		Password:      hash,
-		Email:         param.Email,
-		PhoneNumber:   param.PhoneNumber,
-		GdriveLink:    param.GdriveLink,
-		StatusAccount: "inactive",
-		PaymentTransc: "",
-		RoleID:        2,
+		UserID:           id,
+		FullName:         param.FullName,
+		Email:            param.Email,
+		Password:         hash,
+		StudentNumber:    param.StudentNumber,
+		RegistrationLink: param.RegistrationLink,
+		StatusAccount:    "inactive",
+		PaymentTransc:    "",
+		RoleID:           2,
 	}
 
 	_, err = u.UserRepository.CreateUser(user)
@@ -115,6 +115,7 @@ func (u *UserService) Register(param *model.UserRegister) (string, error) {
 		TeamID:     teamID,
 		TeamName:   param.TeamName,
 		University: param.University,
+		Major:      param.Major,
 		UserID:     id,
 	}
 
