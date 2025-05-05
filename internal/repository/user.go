@@ -8,9 +8,9 @@ import (
 )
 
 type IUserRepository interface {
-	CreateUser(user *entity.User) (*entity.User, error)
+	CreateUser(tx *gorm.DB, user *entity.User) (*entity.User, error)
+	UpdateUser(tx *gorm.DB, user *entity.User) error
 	GetUser(param model.UserParam) (*entity.User, error)
-	UpdateUser(user *entity.User) error
 }
 
 type UserRepository struct {
@@ -23,7 +23,7 @@ func NewUserRepository(db *gorm.DB) IUserRepository {
 	}
 }
 
-func (u *UserRepository) CreateUser(user *entity.User) (*entity.User, error) {
+func (u *UserRepository) CreateUser(tx *gorm.DB, user *entity.User) (*entity.User, error) {
 	err := u.db.Debug().Create(&user).Error
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func (u *UserRepository) GetUser(param model.UserParam) (*entity.User, error) {
 	return &user, nil
 }
 
-func (u *UserRepository) UpdateUser(user *entity.User) error {
+func (u *UserRepository) UpdateUser(tx *gorm.DB, user *entity.User) error {
 	err := u.db.Debug().Where("user_id = ?", user.UserID).Updates(&user).Error
 	if err != nil {
 		return err

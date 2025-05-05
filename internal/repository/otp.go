@@ -8,10 +8,10 @@ import (
 )
 
 type IOtpRepository interface {
-	GetOtp(param model.GetOtp) (*entity.OtpCode, error)
-	CreateOtp(otp *entity.OtpCode) error
-	UpdateOtp(otp *entity.OtpCode) error
-	DeleteOtp(otp *entity.OtpCode) error
+	GetOtp(tx *gorm.DB, param model.GetOtp) (*entity.OtpCode, error)
+	CreateOtp(tx *gorm.DB, otp *entity.OtpCode) error
+	UpdateOtp(tx *gorm.DB, otp *entity.OtpCode) error
+	DeleteOtp(tx *gorm.DB, otp *entity.OtpCode) error
 }
 
 type OtpRepository struct {
@@ -24,7 +24,7 @@ func NewOtpRepository(db *gorm.DB) IOtpRepository {
 	}
 }
 
-func (o *OtpRepository) GetOtp(param model.GetOtp) (*entity.OtpCode, error) {
+func (o *OtpRepository) GetOtp(tx *gorm.DB, param model.GetOtp) (*entity.OtpCode, error) {
 	var otp *entity.OtpCode
 	err := o.db.Debug().Where(&param).First(&otp).Error
 	if err != nil {
@@ -34,7 +34,7 @@ func (o *OtpRepository) GetOtp(param model.GetOtp) (*entity.OtpCode, error) {
 	return otp, nil
 }
 
-func (o *OtpRepository) CreateOtp(otp *entity.OtpCode) error {
+func (o *OtpRepository) CreateOtp(tx *gorm.DB, otp *entity.OtpCode) error {
 	err := o.db.Debug().Create(otp).Error
 	if err != nil {
 		return err
@@ -43,7 +43,7 @@ func (o *OtpRepository) CreateOtp(otp *entity.OtpCode) error {
 	return nil
 }
 
-func (o *OtpRepository) UpdateOtp(otp *entity.OtpCode) error {
+func (o *OtpRepository) UpdateOtp(tx *gorm.DB, otp *entity.OtpCode) error {
 	err := o.db.Debug().Updates(otp).Error
 	if err != nil {
 		return err
@@ -52,7 +52,7 @@ func (o *OtpRepository) UpdateOtp(otp *entity.OtpCode) error {
 	return nil
 }
 
-func (o *OtpRepository) DeleteOtp(otp *entity.OtpCode) error {
+func (o *OtpRepository) DeleteOtp(tx *gorm.DB, otp *entity.OtpCode) error {
 	err := o.db.Debug().Delete(otp).Error
 	if err != nil {
 		return err

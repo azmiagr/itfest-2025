@@ -6,6 +6,7 @@ import (
 	"itfest-2025/internal/repository"
 	"itfest-2025/model"
 	"itfest-2025/pkg/bcrypt"
+	"itfest-2025/pkg/database/mariadb"
 	"itfest-2025/pkg/jwt"
 	"itfest-2025/pkg/mail"
 	"itfest-2025/pkg/supabase"
@@ -27,6 +28,7 @@ type IUserService interface {
 }
 
 type UserService struct {
+	db             *gorm.DB
 	UserRepository repository.IUserRepository
 	TeamRepository repository.ITeamRepository
 	OtpRepository  repository.IOtpRepository
@@ -37,6 +39,7 @@ type UserService struct {
 
 func NewUserService(userRepository repository.IUserRepository, teamRepository repository.ITeamRepository, otpRepository repository.IOtpRepository, bcrypt bcrypt.Interface, jwtAuth jwt.Interface, supabase supabase.Interface) IUserService {
 	return &UserService{
+		db:             mariadb.Connection,
 		UserRepository: userRepository,
 		TeamRepository: teamRepository,
 		OtpRepository:  otpRepository,
@@ -47,7 +50,10 @@ func NewUserService(userRepository repository.IUserRepository, teamRepository re
 }
 
 func (u *UserService) Register(param *model.UserRegister) (string, error) {
-	err := u.TeamRepository.GetTeamByName(param.TeamName)
+	tx := u.db.Begin()
+	defer tx.Rollback()
+
+	err := u.TeamRepository.GetTeamByName(tx, param.TeamName)
 	if err == nil {
 		return "", errors.New("team name already exists")
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -84,7 +90,7 @@ func (u *UserService) Register(param *model.UserRegister) (string, error) {
 		RoleID:           2,
 	}
 
-	_, err = u.UserRepository.CreateUser(user)
+	_, err = u.UserRepository.CreateUser(tx, user)
 	if err != nil {
 		return "", err
 	}
@@ -96,7 +102,7 @@ func (u *UserService) Register(param *model.UserRegister) (string, error) {
 		Code:   code,
 	}
 
-	err = u.OtpRepository.CreateOtp(otp)
+	err = u.OtpRepository.CreateOtp(tx, otp)
 	if err != nil {
 		return "", err
 	}
@@ -116,20 +122,28 @@ func (u *UserService) Register(param *model.UserRegister) (string, error) {
 		TeamName:   param.TeamName,
 		University: param.University,
 		Major:      param.Major,
+		TeamStatus: "belum terverifikasi",
 		UserID:     id,
 	}
 
-	err = u.TeamRepository.CreateTeam(team)
+	err = u.TeamRepository.CreateTeam(tx, team)
+	if err != nil {
+		return "", err
+	}
+
+	err = tx.Commit().Error
 	if err != nil {
 		return "", err
 	}
 
 	return id.String(), nil
-
 }
 
 func (u *UserService) Login(param model.UserLogin) (model.LoginResponse, error) {
 	var result model.LoginResponse
+
+	tx := u.db.Begin()
+	defer tx.Rollback()
 
 	user, err := u.UserRepository.GetUser(model.UserParam{
 		Email: param.Email,
@@ -153,10 +167,18 @@ func (u *UserService) Login(param model.UserLogin) (model.LoginResponse, error) 
 	result.Token = token
 	result.RoleID = user.RoleID
 
+	err = tx.Commit().Error
+	if err != nil {
+		return result, nil
+	}
+
 	return result, nil
 }
 
 func (u *UserService) UploadPayment(userID uuid.UUID, file *multipart.FileHeader) (string, error) {
+	tx := u.db.Begin()
+	defer tx.Rollback()
+
 	user, err := u.UserRepository.GetUser(model.UserParam{
 		UserID: userID,
 	})
@@ -171,7 +193,12 @@ func (u *UserService) UploadPayment(userID uuid.UUID, file *multipart.FileHeader
 
 	user.PaymentTransc = signedURL
 
-	err = u.UserRepository.UpdateUser(user)
+	err = u.UserRepository.UpdateUser(tx, user)
+	if err != nil {
+		return "", err
+	}
+
+	err = tx.Commit().Error
 	if err != nil {
 		return "", err
 	}
@@ -180,7 +207,10 @@ func (u *UserService) UploadPayment(userID uuid.UUID, file *multipart.FileHeader
 }
 
 func (u *UserService) VerifyUser(param model.VerifyUser) error {
-	otp, err := u.OtpRepository.GetOtp(model.GetOtp{
+	tx := u.db.Begin()
+	defer tx.Rollback()
+
+	otp, err := u.OtpRepository.GetOtp(tx, model.GetOtp{
 		UserID: param.UserID,
 	})
 	if err != nil {
@@ -209,12 +239,17 @@ func (u *UserService) VerifyUser(param model.VerifyUser) error {
 	}
 
 	user.StatusAccount = "active"
-	err = u.UserRepository.UpdateUser(user)
+	err = u.UserRepository.UpdateUser(tx, user)
 	if err != nil {
 		return err
 	}
 
-	err = u.OtpRepository.DeleteOtp(otp)
+	err = u.OtpRepository.DeleteOtp(tx, otp)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit().Error
 	if err != nil {
 		return err
 	}

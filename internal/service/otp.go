@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"itfest-2025/internal/repository"
 	"itfest-2025/model"
+	"itfest-2025/pkg/database/mariadb"
 	"itfest-2025/pkg/mail"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type IOtpService interface {
@@ -14,18 +17,23 @@ type IOtpService interface {
 }
 
 type OtpService struct {
+	db             *gorm.DB
 	OtpRepository  repository.IOtpRepository
 	UserRepository repository.IUserRepository
 }
 
 func NewOtpService(OtpRepository repository.IOtpRepository, UserRepository repository.IUserRepository) IOtpService {
 	return &OtpService{
+		db:             mariadb.Connection,
 		OtpRepository:  OtpRepository,
 		UserRepository: UserRepository,
 	}
 }
 
 func (o *OtpService) ResendOtp(param model.GetOtp) error {
+	tx := o.db.Debug()
+	defer tx.Rollback()
+
 	user, err := o.UserRepository.GetUser(model.UserParam{
 		UserID: param.UserID,
 	})
@@ -37,7 +45,7 @@ func (o *OtpService) ResendOtp(param model.GetOtp) error {
 		return errors.New("your account is already active")
 	}
 
-	otp, err := o.OtpRepository.GetOtp(model.GetOtp{
+	otp, err := o.OtpRepository.GetOtp(tx, model.GetOtp{
 		UserID: user.UserID,
 	})
 	if err != nil {
@@ -55,7 +63,7 @@ func (o *OtpService) ResendOtp(param model.GetOtp) error {
 		return err
 	}
 
-	err = o.OtpRepository.UpdateOtp(otp)
+	err = o.OtpRepository.UpdateOtp(tx, otp)
 	if err != nil {
 		return err
 	}

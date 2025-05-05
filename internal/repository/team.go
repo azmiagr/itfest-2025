@@ -7,8 +7,8 @@ import (
 )
 
 type ITeamRepository interface {
-	CreateTeam(team *entity.Team) error
-	GetTeamByName(teamName string) error
+	CreateTeam(tx *gorm.DB, team *entity.Team) error
+	GetTeamByName(tx *gorm.DB, teamName string) error
 }
 
 type TeamRepository struct {
@@ -21,7 +21,7 @@ func NewTeamRepository(db *gorm.DB) ITeamRepository {
 	}
 }
 
-func (t *TeamRepository) CreateTeam(team *entity.Team) error {
+func (t *TeamRepository) CreateTeam(tx *gorm.DB, team *entity.Team) error {
 	err := t.db.Debug().Create(&team).Error
 	if err != nil {
 		return err
@@ -30,7 +30,7 @@ func (t *TeamRepository) CreateTeam(team *entity.Team) error {
 	return nil
 }
 
-func (t *TeamRepository) GetTeamByName(teamName string) error {
+func (t *TeamRepository) GetTeamByName(tx *gorm.DB, teamName string) error {
 	var team entity.Team
 	err := t.db.Debug().Where("team_name = ?", teamName).First(&team).Error
 	if err != nil {

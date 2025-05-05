@@ -7,7 +7,7 @@ type Team struct {
 	TeamName     string       `json:"team_name" gorm:"type:varchar(50);not null"`
 	Major        string       `json:"major" gorm:"type:varchar(80);not null"`
 	University   string       `json:"university" gorm:"type:varchar(80);not null"`
-	TeamStatus   string       `json:"team_status" gorm:"type:enum('terdaftar', 'terverifikasi');not null"`
+	TeamStatus   string       `json:"team_status" gorm:"type:enum('belum terverifikasi', 'terverifikasi');not null"`
 	UserID       uuid.UUID    `json:"user_id"`
 	Registration Registration `json:"registration" gorm:"foreignKey:TeamID"`
 
