@@ -3,25 +3,29 @@ package rest
 import (
 	"fmt"
 	"itfest-2025/internal/service"
+	"itfest-2025/pkg/middleware"
 	"os"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Rest struct {
-	router  *gin.Engine
-	service *service.Service
+	router     *gin.Engine
+	service    *service.Service
+	middleware middleware.Interface
 }
 
-func NewRest(service *service.Service) *Rest {
+func NewRest(service *service.Service, middleware middleware.Interface) *Rest {
 	return &Rest{
-		router:  gin.Default(),
-		service: service,
+		router:     gin.Default(),
+		service:    service,
+		middleware: middleware,
 	}
 }
 
 func (r *Rest) MountEndpoint() {
 	routerGroup := r.router.Group("api/v1")
+	routerGroup.Use(r.middleware.Timeout())
 	auth := routerGroup.Group("/auth")
 
 	auth.POST("/register", r.Register)
