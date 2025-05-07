@@ -17,17 +17,13 @@ func (r *Rest) Register(c *gin.Context) {
 		return
 	}
 
-	userID, err := r.service.UserService.Register(&param)
+	token, err := r.service.UserService.Register(&param)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "failed to register user", err)
 		return
 	}
 
-	loginResponse := model.RegisterResponse{
-		UserID: userID,
-	}
-
-	response.Success(c, http.StatusCreated, "success to register new user", loginResponse)
+	response.Success(c, http.StatusCreated, "success to register new user", token)
 
 }
 

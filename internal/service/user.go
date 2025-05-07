@@ -20,7 +20,7 @@ import (
 )
 
 type IUserService interface {
-	Register(param *model.UserRegister) (string, error)
+	Register(param *model.UserRegister) (model.RegisterResponse, error)
 	Login(param model.UserLogin) (model.LoginResponse, error)
 	UploadPayment(userID uuid.UUID, file *multipart.FileHeader) (string, error)
 	VerifyUser(param model.VerifyUser) error
@@ -49,15 +49,17 @@ func NewUserService(userRepository repository.IUserRepository, teamRepository re
 	}
 }
 
-func (u *UserService) Register(param *model.UserRegister) (string, error) {
+func (u *UserService) Register(param *model.UserRegister) (model.RegisterResponse, error) {
 	tx := u.db.Begin()
 	defer tx.Rollback()
 
+	var result model.RegisterResponse
+
 	err := u.TeamRepository.GetTeamByName(tx, param.TeamName)
 	if err == nil {
-		return "", errors.New("team name already exists")
+		return result, errors.New("team name already exists")
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return "", err
+		return result, err
 	}
 
 	_, err = u.UserRepository.GetUser(model.UserParam{
@@ -65,17 +67,17 @@ func (u *UserService) Register(param *model.UserRegister) (string, error) {
 	})
 
 	if err == nil {
-		return "", errors.New("email already registered")
+		return result, errors.New("email already registered")
 	}
 
 	hash, err := u.BCrypt.GenerateFromPassword(param.Password)
 	if err != nil {
-		return "", err
+		return result, err
 	}
 
 	id, err := uuid.NewUUID()
 	if err != nil {
-		return "", err
+		return result, err
 	}
 
 	user := &entity.User{
@@ -92,7 +94,12 @@ func (u *UserService) Register(param *model.UserRegister) (string, error) {
 
 	_, err = u.UserRepository.CreateUser(tx, user)
 	if err != nil {
-		return "", err
+		return result, err
+	}
+
+	token, err := u.JwtAuth.CreateJWTToken(user.UserID)
+	if err != nil {
+		return result, errors.New("failed to create token")
 	}
 
 	code := mail.GenerateCode()
@@ -104,17 +111,17 @@ func (u *UserService) Register(param *model.UserRegister) (string, error) {
 
 	err = u.OtpRepository.CreateOtp(tx, otp)
 	if err != nil {
-		return "", err
+		return result, err
 	}
 
 	err = mail.SendEmail(user.Email, "OTP Verification", "Your OTP verification code is "+code+".")
 	if err != nil {
-		return "", err
+		return result, err
 	}
 
 	teamID, err := uuid.NewUUID()
 	if err != nil {
-		return "", err
+		return result, err
 	}
 
 	team := &entity.Team{
@@ -128,22 +135,24 @@ func (u *UserService) Register(param *model.UserRegister) (string, error) {
 
 	err = u.TeamRepository.CreateTeam(tx, team)
 	if err != nil {
-		return "", err
+		return result, err
 	}
 
 	err = tx.Commit().Error
 	if err != nil {
-		return "", err
+		return result, err
 	}
 
-	return id.String(), nil
+	result.Token = token
+
+	return result, nil
 }
 
 func (u *UserService) Login(param model.UserLogin) (model.LoginResponse, error) {
-	var result model.LoginResponse
-
 	tx := u.db.Begin()
 	defer tx.Rollback()
+
+	var result model.LoginResponse
 
 	user, err := u.UserRepository.GetUser(model.UserParam{
 		Email: param.Email,

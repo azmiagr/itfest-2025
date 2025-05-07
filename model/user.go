@@ -15,7 +15,7 @@ type UserRegister struct {
 }
 
 type RegisterResponse struct {
-	UserID string `json:"user_id"`
+	Token string `json:"token"`
 }
 
 type UserLogin struct {
