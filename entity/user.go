@@ -19,7 +19,6 @@ type User struct {
 	CreatedAt        time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt        time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 
-	Team          Team           `json:"team" gorm:"foreignKey:UserID"`
-	OtpCode       []OtpCode      `json:"otp_code" gorm:"foreignKey:UserID"`
-	Announcements []Announcement `json:"announcements" gorm:"foreignKey:UserID"`
+	Team    Team      `json:"team" gorm:"foreignKey:UserID"`
+	OtpCode []OtpCode `json:"otp_code" gorm:"foreignKey:UserID"`
 }
