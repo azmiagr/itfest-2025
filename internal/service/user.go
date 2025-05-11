@@ -55,14 +55,7 @@ func (u *UserService) Register(param *model.UserRegister) (model.RegisterRespons
 
 	var result model.RegisterResponse
 
-	err := u.TeamRepository.GetTeamByName(tx, param.TeamName)
-	if err == nil {
-		return result, errors.New("team name already exists")
-	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return result, err
-	}
-
-	_, err = u.UserRepository.GetUser(model.UserParam{
+	_, err := u.UserRepository.GetUser(model.UserParam{
 		Email: param.Email,
 	})
 
@@ -81,15 +74,11 @@ func (u *UserService) Register(param *model.UserRegister) (model.RegisterRespons
 	}
 
 	user := &entity.User{
-		UserID:           id,
-		FullName:         param.FullName,
-		Email:            param.Email,
-		Password:         hash,
-		StudentNumber:    param.StudentNumber,
-		RegistrationLink: param.RegistrationLink,
-		StatusAccount:    "inactive",
-		PaymentTransc:    "",
-		RoleID:           2,
+		UserID:        id,
+		Email:         param.Email,
+		Password:      hash,
+		StatusAccount: "inactive",
+		RoleID:        2,
 	}
 
 	_, err = u.UserRepository.CreateUser(tx, user)
@@ -115,25 +104,6 @@ func (u *UserService) Register(param *model.UserRegister) (model.RegisterRespons
 	}
 
 	err = mail.SendEmail(user.Email, "OTP Verification", "Your OTP verification code is "+code+".")
-	if err != nil {
-		return result, err
-	}
-
-	teamID, err := uuid.NewUUID()
-	if err != nil {
-		return result, err
-	}
-
-	team := &entity.Team{
-		TeamID:     teamID,
-		TeamName:   param.TeamName,
-		University: param.University,
-		Major:      param.Major,
-		TeamStatus: "belum terverifikasi",
-		UserID:     id,
-	}
-
-	err = u.TeamRepository.CreateTeam(tx, team)
 	if err != nil {
 		return result, err
 	}
@@ -172,9 +142,7 @@ func (u *UserService) Login(param model.UserLogin) (model.LoginResponse, error) 
 		return result, errors.New("failed to create token")
 	}
 
-	result.UserID = user.UserID
 	result.Token = token
-	result.RoleID = user.RoleID
 
 	err = tx.Commit().Error
 	if err != nil {
