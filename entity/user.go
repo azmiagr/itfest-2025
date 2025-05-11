@@ -15,6 +15,7 @@ type User struct {
 	RegistrationLink string    `json:"registration_link" gorm:"type:varchar(100);"`
 	PaymentTransc    string    `json:"payment_transc" gorm:"type:text"`
 	StatusAccount    string    `json:"-" gorm:"type:enum('inactive', 'active');"`
+	University       string    `json:"university" gorm:"type:varchar(80);"`
 	Major            string    `json:"major" gorm:"type:varchar(80);"`
 	RoleID           int       `json:"role_id"`
 	CreatedAt        time.Time `json:"created_at" gorm:"autoCreateTime"`
