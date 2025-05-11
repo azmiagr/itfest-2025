@@ -37,6 +37,7 @@ func (r *Rest) MountEndpoint() {
 	user.Use(r.middleware.AuthenticateUser)
 
 	user.POST("/add-member", r.AddTeamMember)
+	user.PATCH("/update-profile", r.UpdateProfile)
 	user.POST("/upload-payment", r.UploadPayment)
 }
 

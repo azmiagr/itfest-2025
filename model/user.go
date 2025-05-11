@@ -20,6 +20,14 @@ type LoginResponse struct {
 	Token string `json:"token"`
 }
 
+type UpdateProfile struct {
+	FullName      string `json:"full_name"`
+	StudentNumber string `json:"student_number"`
+	University    string `json:"university"`
+	Major         string `json:"major"`
+	Email         string `json:"email"`
+}
+
 type UserParam struct {
 	UserID   uuid.UUID `json:"-"`
 	Email    string    `json:"-"`

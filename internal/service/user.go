@@ -24,6 +24,7 @@ type IUserService interface {
 	Login(param model.UserLogin) (model.LoginResponse, error)
 	UploadPayment(userID uuid.UUID, file *multipart.FileHeader) (string, error)
 	VerifyUser(param model.VerifyUser) error
+	UpdateProfile(userID uuid.UUID, param model.UpdateProfile) error
 	GetUser(param model.UserParam) (*entity.User, error)
 }
 
@@ -222,6 +223,37 @@ func (u *UserService) VerifyUser(param model.VerifyUser) error {
 	}
 
 	err = u.OtpRepository.DeleteOtp(tx, otp)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit().Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *UserService) UpdateProfile(userID uuid.UUID, param model.UpdateProfile) error {
+	tx := u.db.Begin()
+	defer tx.Rollback()
+
+	user, err := u.UserRepository.GetUser(model.UserParam{
+		UserID: userID,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	user.FullName = param.FullName
+	user.StudentNumber = param.StudentNumber
+	user.University = param.University
+	user.Major = param.Major
+	user.Email = param.Email
+
+	err = u.UserRepository.UpdateUser(tx, user)
 	if err != nil {
 		return err
 	}

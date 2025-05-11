@@ -89,3 +89,22 @@ func (r *Rest) VerifyUser(c *gin.Context) {
 	response.Success(c, http.StatusOK, "success to verify user", nil)
 
 }
+
+func (r *Rest) UpdateProfile(c *gin.Context) {
+	user := c.MustGet("user").(*entity.User)
+
+	var param model.UpdateProfile
+	err := c.ShouldBindJSON(&param)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "failed to bind input", err)
+		return
+	}
+
+	err = r.service.UserService.UpdateProfile(user.UserID, param)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to update user profile", err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "success to update user profile", nil)
+}
