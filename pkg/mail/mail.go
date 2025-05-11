@@ -29,7 +29,7 @@ func SendEmail(to, subject, message string) error {
 }
 
 func GenerateCode() string {
-	minRange, maxRange := 10000, 99999
+	minRange, maxRange := 100000, 999999
 
 	return strconv.Itoa(rand.Intn(maxRange-minRange+1) + minRange)
 }
