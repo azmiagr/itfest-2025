@@ -108,3 +108,15 @@ func (r *Rest) UpdateProfile(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, "success to update user profile", nil)
 }
+
+func (r *Rest) GetUserProfile(c *gin.Context) {
+	user := c.MustGet("user").(*entity.User)
+
+	userProfile, err := r.service.UserService.GetUserProfile(user.UserID)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to user profile", err)
+		return
+	}
+	response.Success(c, http.StatusOK, "success to get user profile", userProfile)
+
+}

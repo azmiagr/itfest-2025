@@ -25,6 +25,7 @@ type IUserService interface {
 	UploadPayment(userID uuid.UUID, file *multipart.FileHeader) (string, error)
 	VerifyUser(param model.VerifyUser) error
 	UpdateProfile(userID uuid.UUID, param model.UpdateProfile) error
+	GetUserProfile(userID uuid.UUID) (model.UserProfile, error)
 	GetUser(param model.UserParam) (*entity.User, error)
 }
 
@@ -264,6 +265,25 @@ func (u *UserService) UpdateProfile(userID uuid.UUID, param model.UpdateProfile)
 	}
 
 	return nil
+}
+
+func (u *UserService) GetUserProfile(userID uuid.UUID) (model.UserProfile, error) {
+	var result model.UserProfile
+
+	user, err := u.UserRepository.GetUser(model.UserParam{
+		UserID: userID,
+	})
+	if err != nil {
+		return result, err
+	}
+
+	result.FullName = user.FullName
+	result.StudentNumber = user.StudentNumber
+	result.University = user.University
+	result.Major = user.Major
+	result.Email = user.Email
+
+	return result, nil
 }
 
 func (u *UserService) GetUser(param model.UserParam) (*entity.User, error) {
