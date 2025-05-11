@@ -163,12 +163,12 @@ func (u *UserService) UploadPayment(userID uuid.UUID, file *multipart.FileHeader
 		return "", errors.New("user not found")
 	}
 
-	signedURL, err := u.Supabase.UploadFile(file)
+	paymentURL, err := u.Supabase.UploadFile(file)
 	if err != nil {
 		return "", err
 	}
 
-	user.PaymentTransc = signedURL
+	user.PaymentTransc = paymentURL
 
 	err = u.UserRepository.UpdateUser(tx, user)
 	if err != nil {
@@ -180,7 +180,7 @@ func (u *UserService) UploadPayment(userID uuid.UUID, file *multipart.FileHeader
 		return "", err
 	}
 
-	return signedURL, nil
+	return paymentURL, nil
 }
 
 func (u *UserService) VerifyUser(param model.VerifyUser) error {

@@ -32,12 +32,12 @@ func (r *Rest) MountEndpoint() {
 	auth.PATCH("/register", r.VerifyUser)
 	auth.PATCH("/register/resend", r.ResendOtp)
 	auth.POST("/login", r.Login)
-	auth.POST("/upload-payment/:userID", r.UploadPayment)
 
 	user := routerGroup.Group("/users")
 	user.Use(r.middleware.AuthenticateUser)
 
 	user.POST("/add-member", r.AddTeamMember)
+	user.POST("/upload-payment", r.UploadPayment)
 }
 
 func (r *Rest) Run() {

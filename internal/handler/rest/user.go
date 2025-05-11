@@ -1,12 +1,12 @@
 package rest
 
 import (
+	"itfest-2025/entity"
 	"itfest-2025/model"
 	"itfest-2025/pkg/response"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 func (r *Rest) Register(c *gin.Context) {
@@ -46,13 +46,7 @@ func (r *Rest) Login(c *gin.Context) {
 }
 
 func (r *Rest) UploadPayment(c *gin.Context) {
-	userID := c.Param("userID")
-
-	parseID, err := uuid.Parse(userID)
-	if err != nil {
-		response.Error(c, http.StatusBadRequest, "invalid user ID", err)
-		return
-	}
+	user := c.MustGet("user").(*entity.User)
 
 	paymentFile, err := c.FormFile("payment")
 	if err != nil {
@@ -60,7 +54,7 @@ func (r *Rest) UploadPayment(c *gin.Context) {
 		return
 	}
 
-	publicURL, err := r.service.UserService.UploadPayment(parseID, paymentFile)
+	publicURL, err := r.service.UserService.UploadPayment(user.UserID, paymentFile)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "failed to upload payment", err)
 		return
