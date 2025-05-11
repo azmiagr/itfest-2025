@@ -25,7 +25,7 @@ func NewRest(service *service.Service, middleware middleware.Interface) *Rest {
 
 func (r *Rest) MountEndpoint() {
 	routerGroup := r.router.Group("api/v1")
-	routerGroup.Use(r.middleware.Timeout())
+	routerGroup.Use(r.middleware.Timeout(), r.middleware.Cors())
 	auth := routerGroup.Group("/auth")
 
 	auth.POST("/register", r.Register)
@@ -33,6 +33,11 @@ func (r *Rest) MountEndpoint() {
 	auth.PATCH("/register/resend", r.ResendOtp)
 	auth.POST("/login", r.Login)
 	auth.POST("/upload-payment/:userID", r.UploadPayment)
+
+	user := routerGroup.Group("/users")
+	user.Use(r.middleware.AuthenticateUser)
+
+	user.POST("/add-member", r.AddTeamMember)
 }
 
 func (r *Rest) Run() {
