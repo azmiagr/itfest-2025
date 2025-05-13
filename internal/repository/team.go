@@ -13,6 +13,9 @@ type ITeamRepository interface {
 	GetTeamByID(tx *gorm.DB, teamID uuid.UUID) (*entity.Team, error)
 	CreateTeamMember(tx *gorm.DB, teamMember *entity.TeamMember) error
 	CountTeamMember(tx *gorm.DB, teamID uuid.UUID) (int64, error)
+	GetTeamByUserID(tx *gorm.DB, userID uuid.UUID) (*entity.Team, error)
+	UpdateTeam(tx *gorm.DB, team *entity.Team) error
+	DeleteTeamMembers(tx *gorm.DB, teamID uuid.UUID) error
 }
 
 type TeamRepository struct {
@@ -69,4 +72,32 @@ func (t *TeamRepository) CountTeamMember(tx *gorm.DB, teamID uuid.UUID) (int64, 
 	}
 
 	return count, nil
+}
+
+func (t *TeamRepository) GetTeamByUserID(tx *gorm.DB, userID uuid.UUID) (*entity.Team, error) {
+	var team entity.Team
+	err := tx.Where("user_id = ?", userID).First(&team).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &team, nil
+}
+
+func (t *TeamRepository) UpdateTeam(tx *gorm.DB, team *entity.Team) error {
+	err := tx.Updates(&team).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (t *TeamRepository) DeleteTeamMembers(tx *gorm.DB, teamID uuid.UUID) error {
+	err := tx.Where("team_id = ?", teamID).Delete(&entity.TeamMember{}).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

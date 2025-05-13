@@ -12,6 +12,7 @@ import (
 )
 
 type ITeamService interface {
+	UpsertTeam(userID uuid.UUID, param *model.UpsertTeamRequest) error
 	AddTeamMember(param model.AddTeamMemberRequest) error
 }
 
@@ -56,6 +57,67 @@ func (t *TeamService) AddTeamMember(param model.AddTeamMemberRequest) error {
 	err = t.TeamRepository.CreateTeamMember(tx, member)
 	if err != nil {
 		return err
+	}
+
+	err = tx.Commit().Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (t *TeamService) UpsertTeam(userID uuid.UUID, param *model.UpsertTeamRequest) error {
+	if len(param.Members) > 2 {
+		return errors.New("maximum of 2 team members allowed")
+	}
+
+	tx := t.db.Begin()
+	defer tx.Rollback()
+
+	team, err := t.TeamRepository.GetTeamByUserID(tx, userID)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+
+	if team == nil {
+		teamID := uuid.New()
+		newTeam := &entity.Team{
+			TeamID:     teamID,
+			TeamName:   param.TeamName,
+			TeamStatus: "belum terverifikasi",
+			UserID:     userID,
+		}
+		err := t.TeamRepository.CreateTeam(tx, newTeam)
+		if err != nil {
+			return err
+		}
+		team = newTeam
+	} else {
+		team.TeamName = param.TeamName
+
+		err := t.TeamRepository.UpdateTeam(tx, team)
+		if err != nil {
+			return err
+		}
+
+		err = t.TeamRepository.DeleteTeamMembers(tx, team.TeamID)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, v := range param.Members {
+		member := &entity.TeamMember{
+			TeamMemberID:  uuid.New(),
+			TeamID:        team.TeamID,
+			MemberName:    v.Name,
+			StudentNumber: v.StudentNumber,
+		}
+		err := t.TeamRepository.CreateTeamMember(tx, member)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = tx.Commit().Error
