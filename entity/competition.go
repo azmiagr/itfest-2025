@@ -5,7 +5,7 @@ type Competition struct {
 	CompetitionName string `json:"competition_name" gorm:"type:varchar(70);not null"`
 	Description     string `json:"description" gorm:"type:text;not null"`
 
-	Registrations  []Registration `gorm:"foreignKey:CompetitionID"`
+	Teams          []Team         `gorm:"foreignKey:CompetitionID"`
 	TeamProgresses []TeamProgress `gorm:"foreignKey:CompetitionID"`
 	Announcements  []Announcement `gorm:"foreignKey:CompetitionID"`
 }
