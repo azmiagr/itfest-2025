@@ -16,3 +16,14 @@ type TeamMemberRequest struct {
 	Name          string `json:"name" binding:"required"`
 	StudentNumber string `json:"student_number" binding:"required"`
 }
+
+type TeamInfoResponse struct {
+	TeamName            string                `json:"team_name"`
+	CompetitionCategory string                `json:"competition_category"`
+	Members             []TeamMembersResponse `json:"members"`
+}
+
+type TeamMembersResponse struct {
+	FullName      string `json:"full_name"`
+	StudentNumber string `json:"student_number"`
+}
