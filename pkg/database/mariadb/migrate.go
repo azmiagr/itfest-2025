@@ -17,7 +17,6 @@ func Migrate(db *gorm.DB) error {
 		&entity.TeamProgress{},
 		&entity.Submission{},
 		&entity.TeamMember{},
-		&entity.Registration{},
 	)
 	if err != nil {
 		return err
