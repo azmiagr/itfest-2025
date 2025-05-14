@@ -1,6 +1,10 @@
 package model
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type UserRegister struct {
 	Email    string `json:"email" binding:"required,email"`
@@ -52,6 +56,7 @@ type UserTeamProfile struct {
 	LeaderName          string           `json:"leader_name"`
 	StudentNumber       string           `json:"student_number"`
 	CompetitionCategory string           `json:"competition_category"`
+	Deadline            time.Time        `json:"deadline"`
 	Members             []MemberResponse `json:"members"`
 }
 

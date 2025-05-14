@@ -107,11 +107,6 @@ func (t *TeamService) GetMembersByUserID(userID uuid.UUID) (*model.TeamInfoRespo
 		return nil, err
 	}
 
-	competition, err := t.CompetitionRepository.GetCompetitionByID(tx, team.CompetitionID)
-	if err != nil {
-		return nil, err
-	}
-
 	members, err := t.TeamRepository.GetTeamMemberByTeamID(tx, team.TeamID)
 	if err != nil {
 		return nil, err
@@ -123,6 +118,18 @@ func (t *TeamService) GetMembersByUserID(userID uuid.UUID) (*model.TeamInfoRespo
 			FullName:      v.MemberName,
 			StudentNumber: v.StudentNumber,
 		})
+	}
+
+	competition, err := t.CompetitionRepository.GetCompetitionByID(tx, team.CompetitionID)
+	if err.Error() == gorm.ErrRecordNotFound.Error() {
+		TeamInforResponse := model.TeamInfoResponse{
+			TeamName: team.TeamName,
+			Members:  memberResponse,
+		}
+
+		return &TeamInforResponse, nil
+	} else if err != nil {
+		return nil, err
 	}
 
 	TeamInforResponse := model.TeamInfoResponse{

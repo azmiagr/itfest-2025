@@ -314,17 +314,25 @@ func (u *UserService) GetMyTeamProfile(userID uuid.UUID) (*model.UserTeamProfile
 		return nil, err
 	}
 
-	competititon, err := u.CompetitionRepository.GetCompetitionByID(tx, team.CompetitionID)
-	if err != nil {
-		return nil, err
-	}
-
 	var memberResponse []model.MemberResponse
 	for _, v := range members {
 		memberResponse = append(memberResponse, model.MemberResponse{
 			FullName:      v.MemberName,
 			StudentNumber: v.StudentNumber,
 		})
+	}
+
+	competititon, err := u.CompetitionRepository.GetCompetitionByID(tx, team.CompetitionID)
+	if err.Error() == gorm.ErrRecordNotFound.Error() {
+		TeamProfileResponse := &model.UserTeamProfile{
+			LeaderName:    user.FullName,
+			StudentNumber: user.StudentNumber,
+			Members:       memberResponse,
+		}
+
+		return TeamProfileResponse, nil
+	} else if err != nil {
+		return nil, err
 	}
 
 	TeamProfileResponse := &model.UserTeamProfile{
