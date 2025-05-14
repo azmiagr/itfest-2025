@@ -26,28 +26,31 @@ type IUserService interface {
 	VerifyUser(param model.VerifyUser) error
 	UpdateProfile(userID uuid.UUID, param model.UpdateProfile) error
 	GetUserProfile(userID uuid.UUID) (model.UserProfile, error)
+	GetMyTeamProfile(userID uuid.UUID) (*model.UserTeamProfile, error)
 	GetUser(param model.UserParam) (*entity.User, error)
 }
 
 type UserService struct {
-	db             *gorm.DB
-	UserRepository repository.IUserRepository
-	TeamRepository repository.ITeamRepository
-	OtpRepository  repository.IOtpRepository
-	BCrypt         bcrypt.Interface
-	JwtAuth        jwt.Interface
-	Supabase       supabase.Interface
+	db                    *gorm.DB
+	UserRepository        repository.IUserRepository
+	TeamRepository        repository.ITeamRepository
+	OtpRepository         repository.IOtpRepository
+	CompetitionRepository repository.ICompetitionRepository
+	BCrypt                bcrypt.Interface
+	JwtAuth               jwt.Interface
+	Supabase              supabase.Interface
 }
 
-func NewUserService(userRepository repository.IUserRepository, teamRepository repository.ITeamRepository, otpRepository repository.IOtpRepository, bcrypt bcrypt.Interface, jwtAuth jwt.Interface, supabase supabase.Interface) IUserService {
+func NewUserService(userRepository repository.IUserRepository, teamRepository repository.ITeamRepository, otpRepository repository.IOtpRepository, competitionRepository repository.ICompetitionRepository, bcrypt bcrypt.Interface, jwtAuth jwt.Interface, supabase supabase.Interface) IUserService {
 	return &UserService{
-		db:             mariadb.Connection,
-		UserRepository: userRepository,
-		TeamRepository: teamRepository,
-		OtpRepository:  otpRepository,
-		BCrypt:         bcrypt,
-		JwtAuth:        jwtAuth,
-		Supabase:       supabase,
+		db:                    mariadb.Connection,
+		UserRepository:        userRepository,
+		TeamRepository:        teamRepository,
+		OtpRepository:         otpRepository,
+		CompetitionRepository: competitionRepository,
+		BCrypt:                bcrypt,
+		JwtAuth:               jwtAuth,
+		Supabase:              supabase,
 	}
 }
 
@@ -288,4 +291,54 @@ func (u *UserService) GetUserProfile(userID uuid.UUID) (model.UserProfile, error
 
 func (u *UserService) GetUser(param model.UserParam) (*entity.User, error) {
 	return u.UserRepository.GetUser(param)
+}
+
+func (u *UserService) GetMyTeamProfile(userID uuid.UUID) (*model.UserTeamProfile, error) {
+	tx := u.db.Begin()
+	defer tx.Rollback()
+
+	user, err := u.UserRepository.GetUser(model.UserParam{
+		UserID: userID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	team, err := u.TeamRepository.GetTeamByUserID(tx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	members, err := u.TeamRepository.GetTeamMemberByTeamID(tx, team.TeamID)
+	if err != nil {
+		return nil, err
+	}
+
+	competititon, err := u.CompetitionRepository.GetCompetitionByID(tx, team.CompetitionID)
+	if err != nil {
+		return nil, err
+	}
+
+	var memberResponse []model.MemberResponse
+	for _, v := range members {
+		memberResponse = append(memberResponse, model.MemberResponse{
+			FullName:      v.MemberName,
+			StudentNumber: v.StudentNumber,
+		})
+	}
+
+	TeamProfileResponse := &model.UserTeamProfile{
+		LeaderName:          user.FullName,
+		StudentNumber:       user.StudentNumber,
+		CompetitionCategory: competititon.CompetitionName,
+		Members:             memberResponse,
+	}
+
+	err = tx.Commit().Error
+	if err != nil {
+		return nil, err
+	}
+
+	return TeamProfileResponse, nil
+
 }

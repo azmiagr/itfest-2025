@@ -120,3 +120,15 @@ func (r *Rest) GetUserProfile(c *gin.Context) {
 	response.Success(c, http.StatusOK, "success to get user profile", userProfile)
 
 }
+
+func (r *Rest) GetMyTeamProfile(c *gin.Context) {
+	user := c.MustGet("user").(*entity.User)
+
+	teamProfile, err := r.service.UserService.GetMyTeamProfile(user.UserID)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to get team profile", err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "success to get my team profile", teamProfile)
+}

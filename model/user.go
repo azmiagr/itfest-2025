@@ -47,3 +47,15 @@ type VerifyUser struct {
 	UserID  uuid.UUID `json:"user_id" binding:"required"`
 	OtpCode string    `json:"otp_code" binding:"required"`
 }
+
+type UserTeamProfile struct {
+	LeaderName          string           `json:"leader_name"`
+	StudentNumber       string           `json:"student_number"`
+	CompetitionCategory string           `json:"competition_category"`
+	Members             []MemberResponse `json:"members"`
+}
+
+type MemberResponse struct {
+	FullName      string `json:"full_name"`
+	StudentNumber string `json:"student_number"`
+}
