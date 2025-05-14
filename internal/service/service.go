@@ -16,7 +16,7 @@ type Service struct {
 func NewService(repository *repository.Repository, bcrypt bcrypt.Interface, jwtAuth jwt.Interface, supabase supabase.Interface) *Service {
 	return &Service{
 		UserService: NewUserService(repository.UserRepository, repository.TeamRepository, repository.OtpRepository, bcrypt, jwtAuth, supabase),
-		TeamService: NewTeamService(repository.TeamRepository),
+		TeamService: NewTeamService(repository.TeamRepository, repository.CompetitionRepository),
 		OtpService:  NewOtpService(repository.OtpRepository, repository.UserRepository),
 	}
 }

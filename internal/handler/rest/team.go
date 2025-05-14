@@ -9,26 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (r *Rest) AddTeamMember(c *gin.Context) {
-	var param model.AddTeamMemberRequest
-	err := c.ShouldBindJSON(&param)
-	if err != nil {
-		response.Error(c, http.StatusBadRequest, "failed to bind input", err)
-		return
-	}
-
-	user := c.MustGet("user").(*entity.User)
-	param.TeamID = user.Team.TeamID
-
-	err = r.service.TeamService.AddTeamMember(param)
-	if err != nil {
-		response.Error(c, http.StatusInternalServerError, "failed to add team member", err)
-		return
-	}
-
-	response.Success(c, http.StatusCreated, "success add team member", nil)
-}
-
 func (r *Rest) UpsertTeam(c *gin.Context) {
 	var param model.UpsertTeamRequest
 	err := c.ShouldBindJSON(&param)
@@ -44,6 +24,9 @@ func (r *Rest) UpsertTeam(c *gin.Context) {
 		if err.Error() == "maximum of 2 team members allowed" {
 			response.Error(c, http.StatusBadRequest, "cannot add another team member", err)
 			return
+		} else if err.Error() == "team name already exists" {
+			response.Error(c, http.StatusBadRequest, "cannot use this team name", err)
+			return
 		} else {
 			response.Error(c, http.StatusInternalServerError, "failed to upsert team", err)
 			return
@@ -51,4 +34,17 @@ func (r *Rest) UpsertTeam(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, "success upsert team", nil)
+}
+
+func (r *Rest) GetTeamMember(c *gin.Context) {
+	user := c.MustGet("user").(*entity.User)
+
+	teamInfo, err := r.service.TeamService.GetMembersByUserID(user.UserID)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to get team members", err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "success get team members", teamInfo)
+
 }

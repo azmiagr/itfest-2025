@@ -36,7 +36,7 @@ func (r *Rest) MountEndpoint() {
 	user := routerGroup.Group("/users")
 	user.Use(r.middleware.AuthenticateUser)
 	user.GET("/profile", r.GetUserProfile)
-	user.POST("/add-member", r.AddTeamMember)
+	user.GET("/my-team", r.GetTeamMember)
 	user.POST("/upload-payment", r.UploadPayment)
 	user.PATCH("/update-profile", r.UpdateProfile)
 	user.PATCH("/upsert-team", r.UpsertTeam)

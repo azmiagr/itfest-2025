@@ -13,58 +13,21 @@ import (
 
 type ITeamService interface {
 	UpsertTeam(userID uuid.UUID, param *model.UpsertTeamRequest) error
-	AddTeamMember(param model.AddTeamMemberRequest) error
+	GetMembersByUserID(userID uuid.UUID) (*model.TeamInfoResponse, error)
 }
 
 type TeamService struct {
-	db             *gorm.DB
-	TeamRepository repository.ITeamRepository
+	db                    *gorm.DB
+	TeamRepository        repository.ITeamRepository
+	CompetitionRepository repository.ICompetitionRepository
 }
 
-func NewTeamService(teamRepository repository.ITeamRepository) ITeamService {
+func NewTeamService(teamRepository repository.ITeamRepository, competitionRepository repository.ICompetitionRepository) ITeamService {
 	return &TeamService{
-		db:             mariadb.Connection,
-		TeamRepository: teamRepository,
+		db:                    mariadb.Connection,
+		TeamRepository:        teamRepository,
+		CompetitionRepository: competitionRepository,
 	}
-}
-
-func (t *TeamService) AddTeamMember(param model.AddTeamMemberRequest) error {
-	tx := t.db.Begin()
-	defer tx.Rollback()
-
-	_, err := t.TeamRepository.GetTeamByID(tx, param.TeamID)
-	if err != nil {
-		return err
-	}
-
-	count, err := t.TeamRepository.CountTeamMember(tx, param.TeamID)
-	if err != nil {
-		return err
-	}
-
-	if count >= 2 {
-		return errors.New("max member reached")
-	}
-
-	teamMemberID := uuid.New()
-
-	member := &entity.TeamMember{
-		TeamMemberID: teamMemberID,
-		MemberName:   param.MemberName,
-		TeamID:       param.TeamID,
-	}
-
-	err = t.TeamRepository.CreateTeamMember(tx, member)
-	if err != nil {
-		return err
-	}
-
-	err = tx.Commit().Error
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (t *TeamService) UpsertTeam(userID uuid.UUID, param *model.UpsertTeamRequest) error {
@@ -83,12 +46,19 @@ func (t *TeamService) UpsertTeam(userID uuid.UUID, param *model.UpsertTeamReques
 	if team == nil {
 		teamID := uuid.New()
 		newTeam := &entity.Team{
-			TeamID:     teamID,
-			TeamName:   param.TeamName,
-			TeamStatus: "belum terverifikasi",
-			UserID:     userID,
+			TeamID:        teamID,
+			TeamName:      param.TeamName,
+			TeamStatus:    "belum terverifikasi",
+			CompetitionID: 1,
+			UserID:        userID,
 		}
-		err := t.TeamRepository.CreateTeam(tx, newTeam)
+
+		err := t.TeamRepository.GetTeamByName(tx, param.TeamName)
+		if err == nil {
+			return errors.New("team name already exists")
+		}
+
+		err = t.TeamRepository.CreateTeam(tx, newTeam)
 		if err != nil {
 			return err
 		}
@@ -126,4 +96,40 @@ func (t *TeamService) UpsertTeam(userID uuid.UUID, param *model.UpsertTeamReques
 	}
 
 	return nil
+}
+
+func (t *TeamService) GetMembersByUserID(userID uuid.UUID) (*model.TeamInfoResponse, error) {
+	tx := t.db.Begin()
+	defer tx.Rollback()
+
+	team, err := t.TeamRepository.GetTeamByUserID(tx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	competition, err := t.CompetitionRepository.GetCompetitionByID(tx, team.CompetitionID)
+	if err != nil {
+		return nil, err
+	}
+
+	members, err := t.TeamRepository.GetTeamMemberByTeamID(tx, team.TeamID)
+	if err != nil {
+		return nil, err
+	}
+
+	var memberResponse []model.TeamMembersResponse
+	for _, v := range members {
+		memberResponse = append(memberResponse, model.TeamMembersResponse{
+			FullName:      v.MemberName,
+			StudentNumber: v.StudentNumber,
+		})
+	}
+
+	TeamInforResponse := model.TeamInfoResponse{
+		TeamName:            team.TeamName,
+		CompetitionCategory: competition.CompetitionName,
+		Members:             memberResponse,
+	}
+
+	return &TeamInforResponse, nil
 }

@@ -12,10 +12,10 @@ type ITeamRepository interface {
 	GetTeamByName(tx *gorm.DB, teamName string) error
 	GetTeamByID(tx *gorm.DB, teamID uuid.UUID) (*entity.Team, error)
 	CreateTeamMember(tx *gorm.DB, teamMember *entity.TeamMember) error
-	CountTeamMember(tx *gorm.DB, teamID uuid.UUID) (int64, error)
 	GetTeamByUserID(tx *gorm.DB, userID uuid.UUID) (*entity.Team, error)
 	UpdateTeam(tx *gorm.DB, team *entity.Team) error
 	DeleteTeamMembers(tx *gorm.DB, teamID uuid.UUID) error
+	GetTeamMemberByTeamID(tx *gorm.DB, teamID uuid.UUID) ([]*entity.TeamMember, error)
 }
 
 type TeamRepository struct {
@@ -48,7 +48,7 @@ func (t *TeamRepository) GetTeamByName(tx *gorm.DB, teamName string) error {
 
 func (t *TeamRepository) GetTeamByID(tx *gorm.DB, teamID uuid.UUID) (*entity.Team, error) {
 	var team entity.Team
-	err := tx.Debug().Where("team_id = ?", teamID).First(&team).Error
+	err := tx.Debug().Preload("Competition").Preload("TeamMember").Where("team_id = ?", teamID).First(&team).Error
 	if err != nil {
 		return nil, err
 	}
@@ -64,16 +64,6 @@ func (t *TeamRepository) CreateTeamMember(tx *gorm.DB, teamMember *entity.TeamMe
 	return nil
 }
 
-func (t *TeamRepository) CountTeamMember(tx *gorm.DB, teamID uuid.UUID) (int64, error) {
-	var count int64
-	err := tx.Debug().Model(&entity.TeamMember{}).Where("team_id = ?", teamID).Count(&count).Error
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
 func (t *TeamRepository) GetTeamByUserID(tx *gorm.DB, userID uuid.UUID) (*entity.Team, error) {
 	var team entity.Team
 	err := tx.Where("user_id = ?", userID).First(&team).Error
@@ -85,7 +75,7 @@ func (t *TeamRepository) GetTeamByUserID(tx *gorm.DB, userID uuid.UUID) (*entity
 }
 
 func (t *TeamRepository) UpdateTeam(tx *gorm.DB, team *entity.Team) error {
-	err := tx.Updates(&team).Error
+	err := tx.Save(&team).Error
 	if err != nil {
 		return err
 	}
@@ -100,4 +90,14 @@ func (t *TeamRepository) DeleteTeamMembers(tx *gorm.DB, teamID uuid.UUID) error 
 	}
 
 	return nil
+}
+
+func (t *TeamRepository) GetTeamMemberByTeamID(tx *gorm.DB, teamID uuid.UUID) ([]*entity.TeamMember, error) {
+	var members []*entity.TeamMember
+	err := tx.Where("team_id = ?", teamID).Find(&members).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return members, nil
 }
