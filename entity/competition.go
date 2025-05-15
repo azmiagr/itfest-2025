@@ -9,6 +9,6 @@ type Competition struct {
 	Deadline        time.Time `json:"deadline" gorm:"type:date"`
 
 	Teams          []Team         `gorm:"foreignKey:CompetitionID"`
-	TeamProgresses []TeamProgress `gorm:"foreignKey:CompetitionID"`
 	Announcements  []Announcement `gorm:"foreignKey:CompetitionID"`
+	Stages         []Stages       `gorm:"foreignKey:CompetitionID"`
 }
