@@ -10,6 +10,5 @@ type Team struct {
 	CompetitionID int       `json:"competition_id"`
 
 	TeamMembers    []TeamMember   `json:"team_members" gorm:"foreignKey:TeamID"`
-	Submissions    []Submission   `json:"submissions" gorm:"foreignKey:TeamID"`
 	TeamProgresses []TeamProgress `json:"team_progresses" gorm:"foreignKey:TeamID"`
 }
