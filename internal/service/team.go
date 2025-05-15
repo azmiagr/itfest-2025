@@ -46,11 +46,10 @@ func (t *TeamService) UpsertTeam(userID uuid.UUID, param *model.UpsertTeamReques
 	if team == nil {
 		teamID := uuid.New()
 		newTeam := &entity.Team{
-			TeamID:        teamID,
-			TeamName:      param.TeamName,
-			TeamStatus:    "belum terverifikasi",
-			CompetitionID: 1,
-			UserID:        userID,
+			TeamID:     teamID,
+			TeamName:   param.TeamName,
+			TeamStatus: "belum terverifikasi",
+			UserID:     userID,
 		}
 
 		err := t.TeamRepository.GetTeamByName(tx, param.TeamName)
