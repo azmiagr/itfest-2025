@@ -11,6 +11,7 @@ type Service struct {
 	UserService IUserService
 	TeamService ITeamService
 	OtpService  IOtpService
+	SubmissionService  ISubmissionService
 }
 
 func NewService(repository *repository.Repository, bcrypt bcrypt.Interface, jwtAuth jwt.Interface, supabase supabase.Interface) *Service {
@@ -18,5 +19,6 @@ func NewService(repository *repository.Repository, bcrypt bcrypt.Interface, jwtA
 		UserService: NewUserService(repository.UserRepository, repository.TeamRepository, repository.OtpRepository, repository.CompetitionRepository, bcrypt, jwtAuth, supabase),
 		TeamService: NewTeamService(repository.TeamRepository, repository.CompetitionRepository),
 		OtpService:  NewOtpService(repository.OtpRepository, repository.UserRepository),
+		SubmissionService:  NewSubmissionService(repository.SubmissionRepository, repository.TeamRepository),
 	}
 }
