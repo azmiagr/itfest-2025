@@ -132,3 +132,76 @@ func (r *Rest) GetMyTeamProfile(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, "success to get my team profile", teamProfile)
 }
+
+func (r *Rest) ForgotPassword(c *gin.Context) {
+	var param model.ForgotPasswordRequest
+	err := c.ShouldBindJSON(&param)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "failed to bind input", err)
+		return
+	}
+
+	err = r.service.UserService.ForgotPassword(param.Email)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to send email verification", err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "success to send email verification password", nil)
+}
+
+func (r *Rest) VerifyToken(c *gin.Context) {
+	user := c.MustGet("user").(*entity.User)
+
+	var param model.VerifyToken
+	err := c.ShouldBindJSON(&param)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "failed to bind input", err)
+		return
+	}
+
+	param.UserID = user.UserID
+	err = r.service.UserService.VerifyToken(param)
+
+	if err != nil {
+		if err.Error() == "invalid token" {
+			response.Error(c, http.StatusBadRequest, "token is incorrect", err)
+			return
+		} else if err.Error() == "token expired" {
+			response.Error(c, http.StatusBadRequest, "token is already expired", err)
+			return
+		} else {
+			response.Error(c, http.StatusInternalServerError, "failed to verify token", err)
+			return
+		}
+	}
+
+	response.Success(c, http.StatusOK, "success to verify token", nil)
+}
+
+func (r *Rest) ChangePasswordAfterVerify(c *gin.Context) {
+	user := c.MustGet("user").(*entity.User)
+
+	var param model.ResetPasswordRequest
+	err := c.ShouldBindJSON(&param)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "failed to bind input", err)
+		return
+	}
+
+	err = r.service.UserService.ChangePasswordAfterVerify(user.UserID, param)
+	if err != nil {
+		if err.Error() == "password mismatch" {
+			response.Error(c, http.StatusBadRequest, "please check your password", err)
+			return
+		} else if err.Error() == "new password cannot be same as old password" {
+			response.Error(c, http.StatusBadRequest, "please use another password", err)
+			return
+		} else {
+			response.Error(c, http.StatusInternalServerError, "failed to change user password", err)
+			return
+		}
+	}
+
+	response.Success(c, http.StatusOK, "success to change user password", nil)
+}
