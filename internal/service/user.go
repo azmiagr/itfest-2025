@@ -375,7 +375,7 @@ func (u *UserService) ForgotPassword(email string) error {
 		return err
 	}
 
-	err = mail.SendEmail(user.Email, "Reset Password Token", "Your Reset Password code is "+token+".")
+	err = mail.SendEmail(user.Email, "Reset Password Token", "Your Reset Password Code is "+token+".")
 	if err != nil {
 		return err
 	}
