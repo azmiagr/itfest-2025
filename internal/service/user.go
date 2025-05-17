@@ -142,7 +142,7 @@ func (u *UserService) Login(param model.UserLogin) (model.LoginResponse, error) 
 
 	err = u.BCrypt.CompareAndHashPassword(user.Password, param.Password)
 	if err != nil {
-		return result, err
+		return result, errors.New("email or password is wrong")
 	}
 
 	token, err := u.JwtAuth.CreateJWTToken(user.UserID)
@@ -326,15 +326,7 @@ func (u *UserService) GetMyTeamProfile(userID uuid.UUID) (*model.UserTeamProfile
 	}
 
 	competititon, err := u.CompetitionRepository.GetCompetitionByID(tx, team.CompetitionID)
-	if err.Error() == gorm.ErrRecordNotFound.Error() {
-		TeamProfileResponse := &model.UserTeamProfile{
-			LeaderName:    user.FullName,
-			StudentNumber: user.StudentNumber,
-			Members:       memberResponse,
-		}
-
-		return TeamProfileResponse, nil
-	} else if err != nil {
+	if err != nil {
 		return nil, err
 	}
 
