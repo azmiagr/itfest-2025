@@ -19,8 +19,14 @@ func (r *Rest) Register(c *gin.Context) {
 
 	token, err := r.service.UserService.Register(&param)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, "failed to register user", err)
-		return
+		if err.Error() == "email already registered" {
+			response.Error(c, http.StatusBadRequest, "failed to register new user", err)
+			return
+		} else {
+			response.Error(c, http.StatusInternalServerError, "failed to register user", err)
+			return
+		}
+
 	}
 
 	response.Success(c, http.StatusCreated, "success to register new user", token)
@@ -38,8 +44,13 @@ func (r *Rest) Login(c *gin.Context) {
 
 	result, err := r.service.UserService.Login(param)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, "failed to login user", err)
-		return
+		if err.Error() == "email or password is wrong" {
+			response.Error(c, http.StatusUnauthorized, "email or password is wrong", err)
+			return
+		} else {
+			response.Error(c, http.StatusInternalServerError, "failed to login user", err)
+			return
+		}
 	}
 
 	response.Success(c, http.StatusOK, "success to login user", result)
