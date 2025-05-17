@@ -36,7 +36,7 @@ func (r *Rest) UpsertTeam(c *gin.Context) {
 	response.Success(c, http.StatusOK, "success upsert team", nil)
 }
 
-func (r *Rest) GetTeamMember(c *gin.Context) {
+func (r *Rest) GetTeamInfo(c *gin.Context) {
 	user := c.MustGet("user").(*entity.User)
 
 	teamInfo, err := r.service.TeamService.GetMembersByUserID(user.UserID)

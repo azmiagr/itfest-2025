@@ -46,10 +46,11 @@ func (t *TeamService) UpsertTeam(userID uuid.UUID, param *model.UpsertTeamReques
 	if team == nil {
 		teamID := uuid.New()
 		newTeam := &entity.Team{
-			TeamID:     teamID,
-			TeamName:   param.TeamName,
-			TeamStatus: "belum terverifikasi",
-			UserID:     userID,
+			TeamID:        teamID,
+			TeamName:      param.TeamName,
+			TeamStatus:    "belum terverifikasi",
+			CompetitionID: 1,
+			UserID:        userID,
 		}
 
 		err := t.TeamRepository.GetTeamByName(tx, param.TeamName)
@@ -120,14 +121,13 @@ func (t *TeamService) GetMembersByUserID(userID uuid.UUID) (*model.TeamInfoRespo
 	}
 
 	competition, err := t.CompetitionRepository.GetCompetitionByID(tx, team.CompetitionID)
-	if err.Error() == gorm.ErrRecordNotFound.Error() {
-		TeamInforResponse := model.TeamInfoResponse{
-			TeamName: team.TeamName,
-			Members:  memberResponse,
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return &model.TeamInfoResponse{
+				TeamName: "",
+				Members:  []model.TeamMembersResponse{},
+			}, nil
 		}
-
-		return &TeamInforResponse, nil
-	} else if err != nil {
 		return nil, err
 	}
 
@@ -135,6 +135,11 @@ func (t *TeamService) GetMembersByUserID(userID uuid.UUID) (*model.TeamInfoRespo
 		TeamName:            team.TeamName,
 		CompetitionCategory: competition.CompetitionName,
 		Members:             memberResponse,
+	}
+
+	err = tx.Commit().Error
+	if err != nil {
+		return nil, err
 	}
 
 	return &TeamInforResponse, nil
