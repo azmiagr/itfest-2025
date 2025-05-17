@@ -47,6 +47,7 @@ func (r *Rest) MountEndpoint() {
 
 	submission := routerGroup.Group("/submissions")
 	submission.Use(r.middleware.AuthenticateUser)
+	submission.GET("/", r.GetSubmission)
 	submission.GET("/stage", r.GetCurrentStage)
 	submission.POST("/", r.CreateSubmission)
 }

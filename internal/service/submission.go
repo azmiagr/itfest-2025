@@ -12,6 +12,7 @@ import (
 )
 
 type ISubmissionService interface {
+	GetSubmission(param *model.ReqFilterSubmission) ([]entity.TeamProgress, error)
 	GetCurrentStage(userID uuid.UUID) (model.ResStage, error)
 	CreateSubmission(userID uuid.UUID, param *model.ReqSubmission) error
 }
@@ -28,6 +29,10 @@ func NewSubmissionService(submissionRepository repository.ISubmissionRepository,
 		SubmissionRepository: submissionRepository,
 		TeamRepository:       teamRepository,
 	}
+}
+
+func (s *SubmissionService) GetSubmission(param *model.ReqFilterSubmission) ([]entity.TeamProgress, error) {
+	return s.SubmissionRepository.GetSubmission(param)
 }
 
 func (s *SubmissionService) GetCurrentStage(userID uuid.UUID) (model.ResStage, error) {
