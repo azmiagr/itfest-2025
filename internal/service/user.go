@@ -27,6 +27,9 @@ type IUserService interface {
 	UpdateProfile(userID uuid.UUID, param model.UpdateProfile) error
 	GetUserProfile(userID uuid.UUID) (model.UserProfile, error)
 	GetMyTeamProfile(userID uuid.UUID) (*model.UserTeamProfile, error)
+	ForgotPassword(email string) error
+	ChangePasswordAfterVerify(userID uuid.UUID, param model.ResetPasswordRequest) error
+	VerifyToken(param model.VerifyToken) error
 	GetUser(param model.UserParam) (*entity.User, error)
 }
 
@@ -349,4 +352,116 @@ func (u *UserService) GetMyTeamProfile(userID uuid.UUID) (*model.UserTeamProfile
 
 	return TeamProfileResponse, nil
 
+}
+
+func (u *UserService) ForgotPassword(email string) error {
+	tx := u.db.Begin()
+	defer tx.Rollback()
+
+	user, err := u.UserRepository.GetUser(model.UserParam{
+		Email: email,
+	})
+	if err != nil {
+		return err
+	}
+
+	token := mail.GenerateRandomString(6)
+	err = u.OtpRepository.CreateOtp(tx, &entity.OtpCode{
+		OtpID:  uuid.New(),
+		UserID: user.UserID,
+		Code:   token,
+	})
+	if err != nil {
+		return err
+	}
+
+	err = mail.SendEmail(user.Email, "Reset Password Token", "Your Reset Password Code is "+token+".")
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit().Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *UserService) VerifyToken(param model.VerifyToken) error {
+	tx := u.db.Begin()
+	defer tx.Rollback()
+
+	otp, err := u.OtpRepository.GetOtp(tx, model.GetOtp{
+		UserID: param.UserID,
+	})
+	if err != nil {
+		return err
+	}
+
+	if otp.Code != param.Token {
+		return errors.New("invalid token")
+	}
+
+	expiredTime, err := strconv.Atoi(os.Getenv("EXPIRED_OTP"))
+	if err != nil {
+		return err
+	}
+
+	expiredThreshold := time.Now().UTC().Add(-time.Duration(expiredTime) * time.Minute)
+	if otp.UpdatedAt.Before(expiredThreshold) {
+		return errors.New("token expired")
+	}
+
+	err = u.OtpRepository.DeleteOtp(tx, otp)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit().Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *UserService) ChangePasswordAfterVerify(userID uuid.UUID, param model.ResetPasswordRequest) error {
+	tx := u.db.Begin()
+	defer tx.Rollback()
+
+	user, err := u.UserRepository.GetUser(model.UserParam{
+		UserID: userID,
+	})
+	if err != nil {
+		return err
+	}
+
+	if param.NewPassword != param.ConfirmPassword {
+		return errors.New("password mismatch")
+	}
+
+	hashPassword, err := u.BCrypt.GenerateFromPassword(param.NewPassword)
+	if err != nil {
+		return err
+	}
+
+	err = u.BCrypt.CompareAndHashPassword(user.Password, param.NewPassword)
+	if err == nil {
+		return errors.New("new password cannot be same as old password")
+	}
+
+	user.Password = hashPassword
+
+	err = u.UserRepository.UpdateUser(tx, user)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit().Error
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

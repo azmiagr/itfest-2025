@@ -39,8 +39,11 @@ func (r *Rest) MountEndpoint() {
 	user.GET("/my-team-info", r.GetTeamMember)
 	user.GET("/my-team-profile", r.GetMyTeamProfile)
 	user.POST("/upload-payment", r.UploadPayment)
+	user.POST("/forgot-password", r.ForgotPassword)
+	user.POST("/verify-token", r.VerifyToken)
 	user.PATCH("/update-profile", r.UpdateProfile)
 	user.PATCH("/upsert-team", r.UpsertTeam)
+	user.PATCH("/change-password", r.ChangePasswordAfterVerify)
 }
 
 func (r *Rest) Run() {

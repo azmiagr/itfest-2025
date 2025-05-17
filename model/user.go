@@ -52,6 +52,20 @@ type VerifyUser struct {
 	OtpCode string    `json:"otp_code" binding:"required"`
 }
 
+type ForgotPasswordRequest struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+type VerifyToken struct {
+	UserID uuid.UUID `json:"user_id"`
+	Token  string    `json:"token" binding:"required"`
+}
+
+type ResetPasswordRequest struct {
+	NewPassword     string `json:"new_password" binding:"required,min=8"`
+	ConfirmPassword string `json:"confirm_password" binding:"required,min=8"`
+}
+
 type UserTeamProfile struct {
 	LeaderName          string           `json:"leader_name"`
 	StudentNumber       string           `json:"student_number"`
