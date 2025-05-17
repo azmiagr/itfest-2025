@@ -13,6 +13,7 @@ func (m *middleware) AuthenticateUser(c *gin.Context) {
 	bearer := c.GetHeader("Authorization")
 	if bearer == "" {
 		response.Error(c, http.StatusUnauthorized, "empty token", nil)
+		c.Abort()
 		return
 	}
 
