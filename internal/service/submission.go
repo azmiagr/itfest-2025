@@ -78,11 +78,7 @@ func (s *SubmissionService) GetCurrentStage(userID uuid.UUID) (model.ResStage, e
 
 func (s *SubmissionService) CreateSubmission(userID uuid.UUID, param *model.ReqSubmission) error {
 	tx := s.db.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
+	defer tx.Rollback()
 
 	stage, err := s.GetCurrentStage(userID)
 	if err != nil {
