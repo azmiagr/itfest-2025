@@ -6,5 +6,5 @@ type Stages struct {
 	CompetitionID int    `json:"competition_id"`
 	StageOrder    int    `json:"stage_order" gorm:"type:int;not null"`
 
-	TeamProgresses TeamProgress `json:"team_progresses" gorm:"-"`
+	TeamProgresses TeamProgress `json:"team_progresses" gorm:"foreignKey:StageID;references:StageID"`
 }
