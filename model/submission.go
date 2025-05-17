@@ -3,8 +3,6 @@ package model
 import "github.com/google/uuid"
 
 type ReqSubmission struct {
-	StageID    int       `json:"stage_id" binding:"required"`
-	TeamID     uuid.UUID `json:"team_id" binding:"required"`
 	GdriveLink string    `json:"gdrive_link" binding:"required,url"`
 }
 

@@ -57,11 +57,6 @@ func (s *SubmissionService) GetCurrentStage(userID uuid.UUID) (model.ResStage, e
 		return data, err
 	}
 	
-	// stage, err := s.SubmissionRepository.GetStage(team)
-	// if err != nil {
-	// 	return data, err
-	// }
-
 	nextStage, err := s.SubmissionRepository.GetNextStage(currentStage.StageID, team.CompetitionID)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return data, err
@@ -84,6 +79,12 @@ func (s *SubmissionService) CreateSubmission(userID uuid.UUID, param *model.ReqS
 		}
 	}()
 
+	stage, err := s.GetCurrentStage(userID)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
 	team, err := s.TeamRepository.GetTeamByUserID(tx, userID)
 	if err != nil {
 		tx.Rollback()
@@ -91,7 +92,7 @@ func (s *SubmissionService) CreateSubmission(userID uuid.UUID, param *model.ReqS
 	}
 	
 	newSubmission := &entity.TeamProgress{
-		StageID:    param.StageID,    
+		StageID:    stage.IDNextStage,    
 		Status:     "pending",
 		TeamID:     team.TeamID,
 		GdriveLink: param.GdriveLink,
