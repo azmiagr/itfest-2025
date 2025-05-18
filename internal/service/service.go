@@ -8,17 +8,19 @@ import (
 )
 
 type Service struct {
-	UserService IUserService
-	TeamService ITeamService
-	OtpService  IOtpService
+	UserService        IUserService
+	TeamService        ITeamService
+	OtpService         IOtpService
+	CompetitionService ICompetitionService
 	SubmissionService  ISubmissionService
 }
 
 func NewService(repository *repository.Repository, bcrypt bcrypt.Interface, jwtAuth jwt.Interface, supabase supabase.Interface) *Service {
 	return &Service{
-		UserService: NewUserService(repository.UserRepository, repository.TeamRepository, repository.OtpRepository, repository.CompetitionRepository, bcrypt, jwtAuth, supabase),
-		TeamService: NewTeamService(repository.TeamRepository, repository.CompetitionRepository),
-		OtpService:  NewOtpService(repository.OtpRepository, repository.UserRepository),
+		UserService:        NewUserService(repository.UserRepository, repository.TeamRepository, repository.OtpRepository, repository.CompetitionRepository, bcrypt, jwtAuth, supabase),
+		TeamService:        NewTeamService(repository.TeamRepository, repository.CompetitionRepository),
+		OtpService:         NewOtpService(repository.OtpRepository, repository.UserRepository),
 		SubmissionService:  NewSubmissionService(repository.SubmissionRepository, repository.TeamRepository),
+		CompetitionService: NewCompetitionService(repository.CompetitionRepository),
 	}
 }

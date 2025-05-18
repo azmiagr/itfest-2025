@@ -8,6 +8,7 @@ import (
 
 type ICompetitionRepository interface {
 	GetCompetitionByID(tx *gorm.DB, competitionID int) (*entity.Competition, error)
+	GetAllCompetitions(tx *gorm.DB) ([]*entity.Competition, error)
 }
 
 type CompetitionRepository struct {
@@ -29,4 +30,15 @@ func (c *CompetitionRepository) GetCompetitionByID(tx *gorm.DB, competitionID in
 	}
 
 	return competition, nil
+}
+
+func (c *CompetitionRepository) GetAllCompetitions(tx *gorm.DB) ([]*entity.Competition, error) {
+	var competitions []*entity.Competition
+
+	err := tx.Where("competition_id >= ?", 2).Find(&competitions).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return competitions, nil
 }
