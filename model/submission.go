@@ -1,6 +1,10 @@
 package model
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type ReqSubmission struct {
 	GdriveLink string `json:"gdrive_link" binding:"required,url"`
@@ -19,7 +23,8 @@ type ResSubmission struct {
 }
 
 type ResStage struct {
-	IDCurrentStage int `json:"id_current_stage"`
-	NextStage      int `json:"next_stage"`
-	IDNextStage    int `json:"id_next_stage"`
+	IDCurrentStage       int `json:"id_current_stage"`
+	NextStage            int `json:"next_stage"`
+	IDNextStage          int `json:"id_next_stage"`
+	DeadlineNextStage time.Time `json:"deadline_next_stage"`
 }

@@ -6,6 +6,7 @@ import (
 	"itfest-2025/internal/repository"
 	"itfest-2025/model"
 	"itfest-2025/pkg/database/mariadb"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -56,8 +57,13 @@ func (s *SubmissionService) GetCurrentStage(userID uuid.UUID) (model.ResStage, e
 			IDCurrentStage: 0, 
 			NextStage:    firstStage.StageOrder,
 			IDNextStage:    firstStage.StageID,
+			DeadlineNextStage: firstStage.Deadline,
 		}
 		return data, nil
+	} else if currentStage.Status == "diproses" {
+		return data, errors.New("submission sedang diproses")
+	} else if currentStage.Status == "tidak lolos" {
+		return data, errors.New("Tidak lolos ke tahap selanjutnya")
 	} else if err != nil {
 		return data, err
 	}
@@ -71,6 +77,7 @@ func (s *SubmissionService) GetCurrentStage(userID uuid.UUID) (model.ResStage, e
 		IDCurrentStage: currentStage.StageID,
 		NextStage: nextStage.StageOrder,
 		IDNextStage: nextStage.StageID,
+		DeadlineNextStage: nextStage.Deadline,
 	}
 
 	return data, nil
@@ -92,9 +99,16 @@ func (s *SubmissionService) CreateSubmission(userID uuid.UUID, param *model.ReqS
 		return err
 	}
 	
+	if time.Now().After(stage.DeadlineNextStage) {
+		return errors.New("submission ditolak karena sudah melewati deadline")
+	}
+	if team.TeamStatus == "belum terverifikasi" {
+		return errors.New("submission ditolak karena belum terverifikasi")
+	}
+
 	newSubmission := &entity.TeamProgress{
 		StageID:    stage.IDNextStage,    
-		Status:     "pending",
+		Status:     "diproses",
 		TeamID:     team.TeamID,
 		GdriveLink: param.GdriveLink,
 	}
