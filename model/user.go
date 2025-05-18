@@ -32,12 +32,19 @@ type UserProfile struct {
 	Email         string `json:"email"`
 }
 
+type CompetitionRegistrationRequest struct {
+	FullName      string `json:"full_name" binding:"required"`
+	StudentNumber string `json:"student_number" binding:"required"`
+	University    string `json:"university" binding:"required"`
+	Major         string `json:"major" binding:"required"`
+	CompetitionID int    `json:"competition_id" binding:"required"`
+}
+
 type UpdateProfile struct {
 	FullName      string `json:"full_name"`
 	StudentNumber string `json:"student_number"`
 	University    string `json:"university"`
 	Major         string `json:"major"`
-	Email         string `json:"email"`
 }
 
 type UserParam struct {
