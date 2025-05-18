@@ -216,3 +216,22 @@ func (r *Rest) ChangePasswordAfterVerify(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, "success to change user password", nil)
 }
+
+func (r *Rest) CompetitionRegistration(c *gin.Context) {
+	user := c.MustGet("user").(*entity.User)
+
+	var param model.CompetitionRegistrationRequest
+	err := c.ShouldBindJSON(&param)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "failed to bind input", err)
+		return
+	}
+
+	err = r.service.UserService.CompetitionRegistration(user.UserID, param)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to register competition", err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "success to register competition", nil)
+}

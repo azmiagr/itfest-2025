@@ -53,6 +53,10 @@ func (r *Rest) MountEndpoint() {
 	submission.GET("/", r.GetSubmission)
 	submission.GET("/stage", r.GetCurrentStage)
 	submission.POST("/", r.CreateSubmission)
+
+	competition := routerGroup.Group("/competitions")
+	competition.Use(r.middleware.AuthenticateUser)
+	competition.POST("/register", r.CompetitionRegistration)
 }
 
 func (r *Rest) Run() {

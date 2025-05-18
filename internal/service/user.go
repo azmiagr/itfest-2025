@@ -30,6 +30,7 @@ type IUserService interface {
 	ForgotPassword(email string) error
 	ChangePasswordAfterVerify(userID uuid.UUID, param model.ResetPasswordRequest) error
 	VerifyToken(param model.VerifyToken) error
+	CompetitionRegistration(userID uuid.UUID, param model.CompetitionRegistrationRequest) error
 	GetUser(param model.UserParam) (*entity.User, error)
 }
 
@@ -97,6 +98,19 @@ func (u *UserService) Register(param *model.UserRegister) (model.RegisterRespons
 	token, err := u.JwtAuth.CreateJWTToken(user.UserID)
 	if err != nil {
 		return result, errors.New("failed to create token")
+	}
+
+	team := &entity.Team{
+		TeamID:        uuid.New(),
+		TeamName:      "",
+		TeamStatus:    "belum terverifikasi",
+		UserID:        user.UserID,
+		CompetitionID: 1,
+	}
+
+	err = u.TeamRepository.CreateTeam(tx, team)
+	if err != nil {
+		return result, err
 	}
 
 	code := mail.GenerateCode()
@@ -258,7 +272,6 @@ func (u *UserService) UpdateProfile(userID uuid.UUID, param model.UpdateProfile)
 	user.StudentNumber = param.StudentNumber
 	user.University = param.University
 	user.Major = param.Major
-	user.Email = param.Email
 
 	err = u.UserRepository.UpdateUser(tx, user)
 	if err != nil {
@@ -446,6 +459,46 @@ func (u *UserService) ChangePasswordAfterVerify(userID uuid.UUID, param model.Re
 	user.Password = hashPassword
 
 	err = u.UserRepository.UpdateUser(tx, user)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit().Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *UserService) CompetitionRegistration(userID uuid.UUID, param model.CompetitionRegistrationRequest) error {
+	tx := u.db.Begin()
+	defer tx.Rollback()
+
+	user, err := u.UserRepository.GetUser(model.UserParam{
+		UserID: userID,
+	})
+	if err != nil {
+		return err
+	}
+
+	user.FullName = param.FullName
+	user.StudentNumber = param.StudentNumber
+	user.University = param.University
+	user.Major = param.Major
+
+	err = u.UserRepository.UpdateUser(tx, user)
+	if err != nil {
+		return err
+	}
+
+	team, err := u.TeamRepository.GetTeamByUserID(tx, userID)
+	if err != nil {
+		return err
+	}
+
+	team.CompetitionID = param.CompetitionID
+	err = u.TeamRepository.UpdateTeam(tx, team)
 	if err != nil {
 		return err
 	}
