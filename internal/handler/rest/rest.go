@@ -28,8 +28,9 @@ func (r *Rest) MountEndpoint() {
 	r.router.Use(r.middleware.Timeout())
 
 	routerGroup := r.router.Group("api/v1")
-	auth := routerGroup.Group("/auth")
+	routerGroup.GET("/competitions", r.GetAllCompetitions)
 
+	auth := routerGroup.Group("/auth")
 	auth.POST("/register", r.Register)
 	auth.PATCH("/register", r.VerifyUser)
 	auth.PATCH("/register/resend", r.ResendOtp)
