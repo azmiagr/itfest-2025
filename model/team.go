@@ -12,6 +12,11 @@ type UpsertTeamRequest struct {
 	Members  []TeamMemberRequest `json:"members" binding:"required"`
 }
 
+type UpsertTeamResponse struct {
+	TeamName string              `json:"team_name" binding:"required"`
+	Members  []TeamMemberRequest `json:"members" binding:"required"`
+}
+
 type TeamMemberRequest struct {
 	Name          string `json:"name" binding:"required"`
 	StudentNumber string `json:"student_number" binding:"required"`
