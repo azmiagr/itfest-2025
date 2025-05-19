@@ -54,29 +54,29 @@ func (s *SubmissionService) GetCurrentStage(userID uuid.UUID) (model.ResStage, e
 		}
 
 		data = model.ResStage{
-			IDCurrentStage: 0, 
-			NextStage:    firstStage.StageOrder,
-			IDNextStage:    firstStage.StageID,
+			IDCurrentStage:    0,
+			NextStage:         firstStage.StageOrder,
+			IDNextStage:       firstStage.StageID,
 			DeadlineNextStage: firstStage.Deadline,
 		}
 		return data, nil
 	} else if currentStage.Status == "diproses" {
 		return data, errors.New("submission sedang diproses")
 	} else if currentStage.Status == "tidak lolos" {
-		return data, errors.New("Tidak lolos ke tahap selanjutnya")
+		return data, errors.New("tidak lolos ke tahap selanjutnya")
 	} else if err != nil {
 		return data, err
 	}
-	
+
 	nextStage, err := s.SubmissionRepository.GetNextStage(currentStage.StageID, team.CompetitionID)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return data, err
 	}
-	
+
 	data = model.ResStage{
-		IDCurrentStage: currentStage.StageID,
-		NextStage: nextStage.StageOrder,
-		IDNextStage: nextStage.StageID,
+		IDCurrentStage:    currentStage.StageID,
+		NextStage:         nextStage.StageOrder,
+		IDNextStage:       nextStage.StageID,
 		DeadlineNextStage: nextStage.Deadline,
 	}
 
@@ -98,7 +98,7 @@ func (s *SubmissionService) CreateSubmission(userID uuid.UUID, param *model.ReqS
 		tx.Rollback()
 		return err
 	}
-	
+
 	if time.Now().After(stage.DeadlineNextStage) {
 		return errors.New("submission ditolak karena sudah melewati deadline")
 	}
@@ -107,7 +107,7 @@ func (s *SubmissionService) CreateSubmission(userID uuid.UUID, param *model.ReqS
 	}
 
 	newSubmission := &entity.TeamProgress{
-		StageID:    stage.IDNextStage,    
+		StageID:    stage.IDNextStage,
 		Status:     "diproses",
 		TeamID:     team.TeamID,
 		GdriveLink: param.GdriveLink,

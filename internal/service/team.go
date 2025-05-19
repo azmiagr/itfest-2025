@@ -12,7 +12,7 @@ import (
 )
 
 type ITeamService interface {
-	UpsertTeam(userID uuid.UUID, param *model.UpsertTeamRequest) error
+	UpsertTeam(userID uuid.UUID, param *model.UpsertTeamRequest) (*model.UpsertTeamResponse, error)
 	GetMembersByUserID(userID uuid.UUID) (*model.TeamInfoResponse, error)
 }
 
@@ -30,9 +30,9 @@ func NewTeamService(teamRepository repository.ITeamRepository, competitionReposi
 	}
 }
 
-func (t *TeamService) UpsertTeam(userID uuid.UUID, param *model.UpsertTeamRequest) error {
+func (t *TeamService) UpsertTeam(userID uuid.UUID, param *model.UpsertTeamRequest) (*model.UpsertTeamResponse, error) {
 	if len(param.Members) > 2 {
-		return errors.New("maximum of 2 team members allowed")
+		return nil, errors.New("maximum of 2 team members allowed")
 	}
 
 	tx := t.db.Begin()
@@ -40,7 +40,7 @@ func (t *TeamService) UpsertTeam(userID uuid.UUID, param *model.UpsertTeamReques
 
 	team, err := t.TeamRepository.GetTeamByUserID(tx, userID)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return err
+		return nil, err
 	}
 
 	if team == nil {
@@ -55,12 +55,12 @@ func (t *TeamService) UpsertTeam(userID uuid.UUID, param *model.UpsertTeamReques
 
 		err := t.TeamRepository.GetTeamByName(tx, param.TeamName)
 		if err == nil {
-			return errors.New("team name already exists")
+			return nil, errors.New("team name already exists")
 		}
 
 		err = t.TeamRepository.CreateTeam(tx, newTeam)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		team = newTeam
 	} else {
@@ -68,12 +68,12 @@ func (t *TeamService) UpsertTeam(userID uuid.UUID, param *model.UpsertTeamReques
 
 		err := t.TeamRepository.UpdateTeam(tx, team)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		err = t.TeamRepository.DeleteTeamMembers(tx, team.TeamID)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -86,16 +86,20 @@ func (t *TeamService) UpsertTeam(userID uuid.UUID, param *model.UpsertTeamReques
 		}
 		err := t.TeamRepository.CreateTeamMember(tx, member)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
+	var response model.UpsertTeamResponse
+	response.TeamName = team.TeamName
+	response.Members = param.Members
+
 	err = tx.Commit().Error
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &response, nil
 }
 
 func (t *TeamService) GetMembersByUserID(userID uuid.UUID) (*model.TeamInfoResponse, error) {

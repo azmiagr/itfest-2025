@@ -24,7 +24,7 @@ type IUserService interface {
 	Login(param model.UserLogin) (model.LoginResponse, error)
 	UploadPayment(userID uuid.UUID, file *multipart.FileHeader) (string, error)
 	VerifyUser(param model.VerifyUser) error
-	UpdateProfile(userID uuid.UUID, param model.UpdateProfile) error
+	UpdateProfile(userID uuid.UUID, param model.UpdateProfile) (*model.UpdateProfile, error)
 	GetUserProfile(userID uuid.UUID) (model.UserProfile, error)
 	GetMyTeamProfile(userID uuid.UUID) (*model.UserTeamProfile, error)
 	ForgotPassword(email string) error
@@ -256,7 +256,7 @@ func (u *UserService) VerifyUser(param model.VerifyUser) error {
 	return nil
 }
 
-func (u *UserService) UpdateProfile(userID uuid.UUID, param model.UpdateProfile) error {
+func (u *UserService) UpdateProfile(userID uuid.UUID, param model.UpdateProfile) (*model.UpdateProfile, error) {
 	tx := u.db.Begin()
 	defer tx.Rollback()
 
@@ -265,7 +265,7 @@ func (u *UserService) UpdateProfile(userID uuid.UUID, param model.UpdateProfile)
 	})
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	user.FullName = param.FullName
@@ -275,15 +275,22 @@ func (u *UserService) UpdateProfile(userID uuid.UUID, param model.UpdateProfile)
 
 	err = u.UserRepository.UpdateUser(tx, user)
 	if err != nil {
-		return err
+		return nil, err
+	}
+
+	response := &model.UpdateProfile{
+		FullName:      user.FullName,
+		StudentNumber: user.StudentNumber,
+		University:    user.University,
+		Major:         user.Major,
 	}
 
 	err = tx.Commit().Error
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return response, nil
 }
 
 func (u *UserService) GetUserProfile(userID uuid.UUID) (model.UserProfile, error) {
