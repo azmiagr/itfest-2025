@@ -220,15 +220,15 @@ func (r *Rest) ChangePasswordAfterVerify(c *gin.Context) {
 
 func (r *Rest) CompetitionRegistration(c *gin.Context) {
 	user := c.MustGet("user").(*entity.User)
-	competitionID := c.Param("competition_id")
 
-	var param model.CompetitionRegistrationRequest
+	competitionID := c.Param("competition_id")
 	idInt, err := strconv.Atoi(competitionID)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "failed to convert competition id", err)
 		return
 	}
 
+	var param model.CompetitionRegistrationRequest
 	err = c.ShouldBindJSON(&param)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "failed to bind input", err)
