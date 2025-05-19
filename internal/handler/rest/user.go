@@ -111,13 +111,13 @@ func (r *Rest) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	err = r.service.UserService.UpdateProfile(user.UserID, param)
+	res, err := r.service.UserService.UpdateProfile(user.UserID, param)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "failed to update user profile", err)
 		return
 	}
 
-	response.Success(c, http.StatusOK, "success to update user profile", nil)
+	response.Success(c, http.StatusOK, "success to update user profile", res)
 }
 
 func (r *Rest) GetUserProfile(c *gin.Context) {
