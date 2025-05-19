@@ -30,7 +30,7 @@ type IUserService interface {
 	ForgotPassword(email string) error
 	ChangePasswordAfterVerify(userID uuid.UUID, param model.ResetPasswordRequest) error
 	VerifyToken(param model.VerifyToken) error
-	CompetitionRegistration(userID uuid.UUID, param model.CompetitionRegistrationRequest) error
+	CompetitionRegistration(userID uuid.UUID, competitionID int, param model.CompetitionRegistrationRequest) error
 	GetUser(param model.UserParam) (*entity.User, error)
 }
 
@@ -478,7 +478,7 @@ func (u *UserService) ChangePasswordAfterVerify(userID uuid.UUID, param model.Re
 	return nil
 }
 
-func (u *UserService) CompetitionRegistration(userID uuid.UUID, param model.CompetitionRegistrationRequest) error {
+func (u *UserService) CompetitionRegistration(userID uuid.UUID, competitionID int, param model.CompetitionRegistrationRequest) error {
 	tx := u.db.Begin()
 	defer tx.Rollback()
 
@@ -504,7 +504,7 @@ func (u *UserService) CompetitionRegistration(userID uuid.UUID, param model.Comp
 		return err
 	}
 
-	team.CompetitionID = param.CompetitionID
+	team.CompetitionID = competitionID
 	err = u.TeamRepository.UpdateTeam(tx, team)
 	if err != nil {
 		return err

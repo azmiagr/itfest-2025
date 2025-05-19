@@ -56,7 +56,7 @@ func (r *Rest) MountEndpoint() {
 
 	competition := routerGroup.Group("/competitions")
 	competition.Use(r.middleware.AuthenticateUser)
-	competition.POST("/register", r.CompetitionRegistration)
+	competition.POST("/register/:competition_id", r.CompetitionRegistration)
 }
 
 func (r *Rest) Run() {

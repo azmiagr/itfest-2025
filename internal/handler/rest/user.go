@@ -5,6 +5,7 @@ import (
 	"itfest-2025/model"
 	"itfest-2025/pkg/response"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -220,14 +221,21 @@ func (r *Rest) ChangePasswordAfterVerify(c *gin.Context) {
 func (r *Rest) CompetitionRegistration(c *gin.Context) {
 	user := c.MustGet("user").(*entity.User)
 
+	competitionID := c.Param("competition_id")
+	idInt, err := strconv.Atoi(competitionID)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "failed to convert competition id", err)
+		return
+	}
+
 	var param model.CompetitionRegistrationRequest
-	err := c.ShouldBindJSON(&param)
+	err = c.ShouldBindJSON(&param)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "failed to bind input", err)
 		return
 	}
 
-	err = r.service.UserService.CompetitionRegistration(user.UserID, param)
+	err = r.service.UserService.CompetitionRegistration(user.UserID, idInt, param)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "failed to register competition", err)
 		return
