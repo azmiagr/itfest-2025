@@ -243,3 +243,13 @@ func (r *Rest) CompetitionRegistration(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, "success to register competition", nil)
 }
+
+func (r *Rest) GetUserPaymentStatus(c *gin.Context) {
+	res, err := r.service.UserService.GetUserPaymentStatus()
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to get user payment status", err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "success to get user payment status", res)
+}
