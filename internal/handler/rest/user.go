@@ -23,8 +23,8 @@ func (r *Rest) Register(c *gin.Context) {
 		if err.Error() == "email already registered" {
 			response.Error(c, http.StatusBadRequest, "failed to register new user", err)
 			return
-		} else {
-			response.Error(c, http.StatusInternalServerError, "failed to register user", err)
+		} else if err.Error() == "password doesn't match" {
+			response.Error(c, http.StatusBadRequest, "failed to register new user", err)
 			return
 		}
 
