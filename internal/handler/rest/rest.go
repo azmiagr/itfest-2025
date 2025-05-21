@@ -61,6 +61,7 @@ func (r *Rest) MountEndpoint() {
 	admin := routerGroup.Group("/admin")
 	admin.Use(r.middleware.AuthenticateUser, r.middleware.OnlyAdmin)
 	admin.GET("/payment-status", r.GetUserPaymentStatus)
+	admin.GET("/total-participants", r.GetTotalParticipant)
 }
 
 func (r *Rest) Run() {
