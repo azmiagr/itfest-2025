@@ -16,7 +16,7 @@ import (
 type Interface interface {
 	CreateJWTToken(userID uuid.UUID) (string, error)
 	ValidateToken(tokenString string) (uuid.UUID, error)
-	GetLoginUser(ctx *gin.Context) (*entity.User, error)
+	GetLoginUser(c *gin.Context) (*entity.User, error)
 }
 
 type jsonWebToken struct {
@@ -81,8 +81,8 @@ func (j *jsonWebToken) ValidateToken(tokenString string) (uuid.UUID, error) {
 	return userID, nil
 }
 
-func (j *jsonWebToken) GetLoginUser(ctx *gin.Context) (*entity.User, error) {
-	user, ok := ctx.Get("user")
+func (j *jsonWebToken) GetLoginUser(c *gin.Context) (*entity.User, error) {
+	user, ok := c.Get("user")
 	if !ok {
 		return &entity.User{}, errors.New("failed to get user login")
 	}
