@@ -84,3 +84,13 @@ type MemberResponse struct {
 	FullName      string `json:"full_name"`
 	StudentNumber string `json:"student_number"`
 }
+
+type GetUserPaymentStatus struct {
+	FullName        string `json:"fullname"`
+	StudentNumber   string `json:"student_number"`
+	Email           string `json:"email"`
+	PaymentTransc   string `json:"payment_transc"`
+	TeamName        string `json:"team_name"`
+	TeamStatus      string `json:"team_status"`
+	CompetitionName string `json:"competition_name"`
+}
