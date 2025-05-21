@@ -94,3 +94,8 @@ type GetUserPaymentStatus struct {
 	TeamStatus      string `json:"team_status"`
 	CompetitionName string `json:"competition_name"`
 }
+
+type GetTotalParticipant struct {
+	TotalUIUX int `json:"total_uiux"`
+	TotalBP   int `json:"total_bp"`
+}
