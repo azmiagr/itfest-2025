@@ -74,6 +74,10 @@ func (u *UserService) Register(param *model.UserRegister) (model.RegisterRespons
 		return result, errors.New("email already registered")
 	}
 
+	if param.Password != param.ConfirmPassword {
+		return result, errors.New("password doesn't match")
+	}
+
 	hash, err := u.BCrypt.GenerateFromPassword(param.Password)
 	if err != nil {
 		return result, err
