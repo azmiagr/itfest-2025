@@ -32,6 +32,7 @@ type IUserService interface {
 	VerifyToken(param model.VerifyToken) error
 	CompetitionRegistration(userID uuid.UUID, competitionID int, param model.CompetitionRegistrationRequest) error
 	GetUserPaymentStatus() ([]*model.GetUserPaymentStatus, error)
+	GetTotalParticipant() (*model.GetTotalParticipant, error)
 	GetUser(param model.UserParam) (*entity.User, error)
 }
 
@@ -544,6 +545,37 @@ func (u *UserService) GetUserPaymentStatus() ([]*model.GetUserPaymentStatus, err
 			TeamStatus:      v.Team.TeamStatus,
 			CompetitionName: competition.CompetitionName,
 		})
+	}
+
+	return res, nil
+}
+
+func (u *UserService) GetTotalParticipant() (*model.GetTotalParticipant, error) {
+
+	var (
+		totalUIUX int
+		totalBP   int
+	)
+
+	tx := u.db.Begin()
+	defer tx.Rollback()
+
+	users, err := u.UserRepository.GetAllUser()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, v := range users {
+		if v.Team.CompetitionID == 2 {
+			totalUIUX++
+		} else if v.Team.CompetitionID == 3 {
+			totalBP++
+		}
+	}
+
+	res := &model.GetTotalParticipant{
+		TotalUIUX: totalUIUX,
+		TotalBP:   totalBP,
 	}
 
 	return res, nil

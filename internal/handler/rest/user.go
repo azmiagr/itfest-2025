@@ -253,3 +253,13 @@ func (r *Rest) GetUserPaymentStatus(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, "success to get user payment status", res)
 }
+
+func (r *Rest) GetTotalParticipant(c *gin.Context) {
+	res, err := r.service.UserService.GetTotalParticipant()
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to get total participant", err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "success to get total participant", res)
+}
