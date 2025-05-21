@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"itfest-2025/pkg/response"
 	"net/http"
 
@@ -16,7 +17,7 @@ func (m *middleware) OnlyAdmin(c *gin.Context) {
 	}
 
 	if user.RoleID != 1 {
-		response.Error(c, http.StatusForbidden, "this endpoint cannot be access", err)
+		response.Error(c, http.StatusForbidden, "this endpoint cannot be access", errors.New("user dont have access"))
 		c.Abort()
 		return
 	}

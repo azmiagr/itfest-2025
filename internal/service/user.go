@@ -31,6 +31,7 @@ type IUserService interface {
 	ChangePasswordAfterVerify(userID uuid.UUID, param model.ResetPasswordRequest) error
 	VerifyToken(param model.VerifyToken) error
 	CompetitionRegistration(userID uuid.UUID, competitionID int, param model.CompetitionRegistrationRequest) error
+	GetUserPaymentStatus() ([]*model.GetUserPaymentStatus, error)
 	GetUser(param model.UserParam) (*entity.User, error)
 }
 
@@ -516,4 +517,34 @@ func (u *UserService) CompetitionRegistration(userID uuid.UUID, competitionID in
 	}
 
 	return nil
+}
+
+func (u *UserService) GetUserPaymentStatus() ([]*model.GetUserPaymentStatus, error) {
+	var res []*model.GetUserPaymentStatus
+
+	tx := u.db.Begin()
+	defer tx.Rollback()
+
+	users, err := u.UserRepository.GetAllUser()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, v := range users {
+		competition, err := u.CompetitionRepository.GetCompetitionByID(tx, v.Team.CompetitionID)
+		if err != nil {
+			continue
+		}
+		res = append(res, &model.GetUserPaymentStatus{
+			FullName:        v.FullName,
+			StudentNumber:   v.StudentNumber,
+			Email:           v.Email,
+			PaymentTransc:   v.PaymentTransc,
+			TeamName:        v.Team.TeamName,
+			TeamStatus:      v.Team.TeamStatus,
+			CompetitionName: competition.CompetitionName,
+		})
+	}
+
+	return res, nil
 }
