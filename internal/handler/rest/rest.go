@@ -47,6 +47,7 @@ func (r *Rest) MountEndpoint() {
 	user.PATCH("/update-profile", r.UpdateProfile)
 	user.PATCH("/upsert-team", r.UpsertTeam)
 	user.PATCH("/change-password", r.ChangePasswordAfterVerify)
+	user.PATCH("/resend-token", r.ResendToken)
 
 	submission := routerGroup.Group("/submissions")
 	submission.Use(r.middleware.AuthenticateUser)
