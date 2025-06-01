@@ -10,6 +10,7 @@ import (
 type ITeamRepository interface {
 	CreateTeam(tx *gorm.DB, team *entity.Team) error
 	GetTeamByName(tx *gorm.DB, teamName string) error
+	GetTeam(tx *gorm.DB) ([]*entity.Team, error)
 	GetTeamByID(tx *gorm.DB, teamID uuid.UUID) (*entity.Team, error)
 	CreateTeamMember(tx *gorm.DB, teamMember *entity.TeamMember) error
 	GetTeamByUserID(tx *gorm.DB, userID uuid.UUID) (*entity.Team, error)
@@ -44,6 +45,15 @@ func (t *TeamRepository) GetTeamByName(tx *gorm.DB, teamName string) error {
 		return err
 	}
 	return nil
+}
+
+func (t *TeamRepository) GetTeam(tx *gorm.DB) ([]*entity.Team, error) {
+	var team []*entity.Team
+	err := tx.Debug().Preload("Competition").Preload("TeamMember").Find(&team).Error
+	if err != nil {
+		return nil, err
+	}
+	return team, nil
 }
 
 func (t *TeamRepository) GetTeamByID(tx *gorm.DB, teamID uuid.UUID) (*entity.Team, error) {
