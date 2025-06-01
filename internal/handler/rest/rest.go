@@ -65,7 +65,7 @@ func (r *Rest) MountEndpoint() {
 	admin.GET("/total-participants", r.GetTotalParticipant)
 	
 	excel := admin.Group("/excel")
-	excel.GET("/data-team", r.GetExportTeam)
+	excel.GET("/data-payment", r.GetExportPayment)
 }
 
 func (r *Rest) Run() {

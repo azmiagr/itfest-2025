@@ -23,6 +23,6 @@ func NewService(repository *repository.Repository, bcrypt bcrypt.Interface, jwtA
 		OtpService:         NewOtpService(repository.OtpRepository, repository.UserRepository),
 		SubmissionService:  NewSubmissionService(repository.SubmissionRepository, repository.TeamRepository),
 		CompetitionService: NewCompetitionService(repository.CompetitionRepository),
-		ExcelService:       NewExcelService(repository.TeamRepository, repository.CompetitionRepository),
+		ExcelService:       NewExcelService(repository.TeamRepository, repository.CompetitionRepository, repository.UserRepository),
 	}
 }

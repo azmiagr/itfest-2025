@@ -2,20 +2,24 @@ package template
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/xuri/excelize/v2"
 )
 
 type ExcelSheet struct {
-	Name    string
-	Headers []string
-	Rows    [][]interface{}
+	Name          string
+	Headers       []string
+	Rows          [][]interface{}
+	ColWidths     map[int]float64
+	HeaderStyleID int
+	RowStyleMap   map[int]int
+	ColStyleMap   map[int]int
 }
 
-func ExportExcel(fileNamePrefix string, sheets []ExcelSheet) (string, error) {
-	f := excelize.NewFile()
-
+func ExportExcel(fileNamePrefix string, sheets []ExcelSheet, f *excelize.File) (string, error) {
 	for i, sheet := range sheets {
 		sheetName := sheet.Name
 
@@ -27,34 +31,52 @@ func ExportExcel(fileNamePrefix string, sheets []ExcelSheet) (string, error) {
 			}
 		}
 
-		// Header
+		// Set header values
 		for colIdx, header := range sheet.Headers {
-			cell, err := excelize.CoordinatesToCellName(colIdx+1, 1)
-			if err != nil {
-				return "", fmt.Errorf("failed to get cell name for header: %w", err)
+			cell, _ := excelize.CoordinatesToCellName(colIdx+1, 1)
+			f.SetCellValue(sheetName, cell, header)
+			if sheet.HeaderStyleID != 0 {
+				f.SetCellStyle(sheetName, cell, cell, sheet.HeaderStyleID)
 			}
-			if err := f.SetCellValue(sheetName, cell, header); err != nil {
-				return "", fmt.Errorf("failed to set header value at %s: %w", cell, err)
+			// Atur lebar kolom jika diset
+			colLetter, _ := excelize.ColumnNumberToName(colIdx + 1)
+			width := 20.0
+			if w, ok := sheet.ColWidths[colIdx+1]; ok {
+				width = w
 			}
+			f.SetColWidth(sheetName, colLetter, colLetter, width)
 		}
 
-		// Rows
+		// Set row data
 		for rowIdx, row := range sheet.Rows {
+			excelRow := rowIdx + 2
 			for colIdx, val := range row {
-				cell, err := excelize.CoordinatesToCellName(colIdx+1, rowIdx+2)
-				if err != nil {
-					return "", fmt.Errorf("failed to get cell name for data: %w", err)
+				cell, _ := excelize.CoordinatesToCellName(colIdx+1, excelRow)
+				f.SetCellValue(sheetName, cell, val)
+
+				// Cek apakah baris punya style
+				if styleID, ok := sheet.RowStyleMap[excelRow]; ok {
+					f.SetCellStyle(sheetName, cell, cell, styleID)
 				}
-				if err := f.SetCellValue(sheetName, cell, val); err != nil {
-					return "", fmt.Errorf("failed to set cell value at %s: %w", cell, err)
+
+				// Cek apakah kolom punya style spesifik (misal No rata tengah)
+				if styleID, ok := sheet.ColStyleMap[colIdx+1]; ok {
+					f.SetCellStyle(sheetName, cell, cell, styleID)
 				}
 			}
 		}
 	}
 
-	// Simpan file
+	// Simpan ke folder public/
+	outputDir := "public"
+	if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
+		return "", fmt.Errorf("failed to create output directory: %w", err)
+	}
+
 	fileName := fmt.Sprintf("%s_%s.xlsx", fileNamePrefix, time.Now().Format("20060102_150405"))
-	if err := f.SaveAs("public/"+fileName); err != nil {
+	filePath := filepath.Join(outputDir, fileName)
+
+	if err := f.SaveAs(filePath); err != nil {
 		return "", fmt.Errorf("failed to save excel file: %w", err)
 	}
 
