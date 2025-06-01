@@ -37,7 +37,6 @@ func (s *ExcelService) ExportExcelPayment() (string, error) {
 
 	f := excelize.NewFile()
 
-	// Header style (bold, putih text, background biru, border)
 	headerStyle, err := f.NewStyle(&excelize.Style{
 		Font:      &excelize.Font{Bold: true, Color: "FFFFFF"},
 		Fill:      excelize.Fill{Type: "pattern", Color: []string{"4F81BD"}, Pattern: 1},
@@ -53,7 +52,6 @@ func (s *ExcelService) ExportExcelPayment() (string, error) {
 		return "", err
 	}
 
-	// Style baris ganjil (abu muda) dengan border
 	rowStyleOdd, err := f.NewStyle(&excelize.Style{
 		Alignment: &excelize.Alignment{
 			WrapText: true,
@@ -71,7 +69,6 @@ func (s *ExcelService) ExportExcelPayment() (string, error) {
 		return "", err
 	}
 
-	// Style baris genap (putih) dengan border
 	rowStyleEven, err := f.NewStyle(&excelize.Style{
 		Alignment: &excelize.Alignment{
 			WrapText: true,
@@ -89,7 +86,6 @@ func (s *ExcelService) ExportExcelPayment() (string, error) {
 		return "", err
 	}
 
-	// Style kolom No: hanya alignment tengah + border tanpa fill (agar warna baris tetap muncul)
 	noColStyle, err := f.NewStyle(&excelize.Style{
 		Alignment: &excelize.Alignment{Horizontal: "center", Vertical: "center"},
 		Border: []excelize.Border{
@@ -110,7 +106,7 @@ func (s *ExcelService) ExportExcelPayment() (string, error) {
 		Headers:       headers,
 		Rows:          [][]interface{}{},
 		HeaderStyleID: headerStyle,
-		ColWidths:     map[int]float64{1: 5, 2: 30, 3: 25},
+		ColWidths:     map[int]float64{1: 5, 2: 30, 3: 25, 4: 30, 5: 30, 6: 100, 7: 100},
 		RowStyleMap:   map[int]int{},
 		ColStyleMap:   map[int]int{},
 	}
@@ -135,8 +131,6 @@ func (s *ExcelService) ExportExcelPayment() (string, error) {
 		userColorToggle = 1 - userColorToggle
 	}
 
-
-	// Kolom No (nomor) style alignment tengah + border, tanpa fill supaya warna baris terlihat
 	sheet.ColStyleMap[1] = noColStyle
 
 	fileName, err := template.ExportExcel("Payment IT FEST 2025", []template.ExcelSheet{sheet}, f)
