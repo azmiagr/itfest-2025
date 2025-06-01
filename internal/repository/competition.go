@@ -24,7 +24,7 @@ func NewCompetitionRepository(db *gorm.DB) ICompetitionRepository {
 func (c *CompetitionRepository) GetCompetitionByID(tx *gorm.DB, competitionID int) (*entity.Competition, error) {
 	var competition *entity.Competition
 
-	err := tx.Where("competition_id = ?", competitionID).First(&competition).Error
+	err := tx.Where("competition_id = ?", competitionID).Preload("Teams").Preload("Teams.TeamMembers").First(&competition).Error
 	if err != nil {
 		return nil, err
 	}
