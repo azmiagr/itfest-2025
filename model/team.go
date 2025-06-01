@@ -8,7 +8,7 @@ type AddTeamMemberRequest struct {
 }
 
 type UpsertTeamRequest struct {
-	TeamName string              `json:"team_name" binding:"required"`
+	TeamName string              `json:"team_name"`
 	Members  []TeamMemberRequest `json:"members" binding:"required"`
 }
 
