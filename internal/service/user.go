@@ -101,7 +101,7 @@ func (u *UserService) Register(param *model.UserRegister) (model.RegisterRespons
 		return result, err
 	}
 
-	token, err := u.JwtAuth.CreateJWTToken(user.UserID)
+	token, err := u.JwtAuth.CreateJWTToken(user.UserID, false)
 	if err != nil {
 		return result, errors.New("failed to create token")
 	}
@@ -147,6 +147,8 @@ func (u *UserService) Register(param *model.UserRegister) (model.RegisterRespons
 }
 
 func (u *UserService) Login(param model.UserLogin) (model.LoginResponse, error) {
+	var isAdmin bool
+
 	tx := u.db.Begin()
 	defer tx.Rollback()
 
@@ -155,9 +157,14 @@ func (u *UserService) Login(param model.UserLogin) (model.LoginResponse, error) 
 	user, err := u.UserRepository.GetUser(model.UserParam{
 		Email: param.Email,
 	})
-
 	if err != nil {
-		return result, err
+		return result, errors.New("email or password is wrong")
+	}
+
+	if user.RoleID == 1 {
+		isAdmin = true
+	} else {
+		isAdmin = false
 	}
 
 	err = u.BCrypt.CompareAndHashPassword(user.Password, param.Password)
@@ -165,7 +172,7 @@ func (u *UserService) Login(param model.UserLogin) (model.LoginResponse, error) 
 		return result, errors.New("email or password is wrong")
 	}
 
-	token, err := u.JwtAuth.CreateJWTToken(user.UserID)
+	token, err := u.JwtAuth.CreateJWTToken(user.UserID, isAdmin)
 	if err != nil {
 		return result, errors.New("failed to create token")
 	}

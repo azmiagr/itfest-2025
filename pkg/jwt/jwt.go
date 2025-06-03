@@ -14,7 +14,7 @@ import (
 )
 
 type Interface interface {
-	CreateJWTToken(userID uuid.UUID) (string, error)
+	CreateJWTToken(userID uuid.UUID, isAdmin bool) (string, error)
 	ValidateToken(tokenString string) (uuid.UUID, error)
 	GetLoginUser(c *gin.Context) (*entity.User, error)
 }
@@ -25,7 +25,8 @@ type jsonWebToken struct {
 }
 
 type Claims struct {
-	UserID uuid.UUID
+	UserID  uuid.UUID
+	IsAdmin bool
 	jwt.RegisteredClaims
 }
 
@@ -42,9 +43,10 @@ func Init() Interface {
 	}
 }
 
-func (j *jsonWebToken) CreateJWTToken(userID uuid.UUID) (string, error) {
+func (j *jsonWebToken) CreateJWTToken(userID uuid.UUID, isAdmin bool) (string, error) {
 	claims := &Claims{
-		UserID: userID,
+		UserID:  userID,
+		IsAdmin: isAdmin,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(j.ExpiredTime)),
 		},
