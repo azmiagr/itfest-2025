@@ -14,6 +14,7 @@ type Service struct {
 	CompetitionService ICompetitionService
 	SubmissionService  ISubmissionService
 	ExcelService       IExcelService
+	CountService       ICountService
 }
 
 func NewService(repository *repository.Repository, bcrypt bcrypt.Interface, jwtAuth jwt.Interface, supabase supabase.Interface) *Service {
@@ -24,5 +25,6 @@ func NewService(repository *repository.Repository, bcrypt bcrypt.Interface, jwtA
 		SubmissionService:  NewSubmissionService(repository.SubmissionRepository, repository.TeamRepository),
 		CompetitionService: NewCompetitionService(repository.CompetitionRepository),
 		ExcelService:       NewExcelService(repository.TeamRepository, repository.CompetitionRepository, repository.UserRepository),
+		CountService:       NewCountService(repository.TeamRepository, repository.UserRepository),
 	}
 }

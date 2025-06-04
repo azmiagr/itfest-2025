@@ -17,6 +17,7 @@ type ITeamRepository interface {
 	UpdateTeam(tx *gorm.DB, team *entity.Team) error
 	DeleteTeamMembers(tx *gorm.DB, teamID uuid.UUID) error
 	GetTeamMemberByTeamID(tx *gorm.DB, teamID uuid.UUID) ([]*entity.TeamMember, error)
+	GetCount(tx *gorm.DB, competitionID string) (int64, error)
 }
 
 type TeamRepository struct {
@@ -45,6 +46,19 @@ func (t *TeamRepository) GetTeamByName(tx *gorm.DB, teamName string) error {
 		return err
 	}
 	return nil
+}
+
+func (t *TeamRepository) GetCount(tx *gorm.DB, competitionID string) (int64, error) {
+	var count int64
+	query := tx.Debug().Model(&entity.Team{}).Where("competition_id >= ?", 2)
+	if competitionID != "" {
+		query = query.Where("competition_id = ?", competitionID)
+	}
+	err := query.Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (t *TeamRepository) GetTeam(tx *gorm.DB) ([]*entity.Team, error) {

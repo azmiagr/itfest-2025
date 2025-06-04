@@ -12,6 +12,7 @@ type IUserRepository interface {
 	UpdateUser(tx *gorm.DB, user *entity.User) error
 	GetUser(param model.UserParam) (*entity.User, error)
 	GetAllUser() ([]*entity.User, error)
+	GetCountPayment() (int64, error)
 }
 
 type UserRepository struct {
@@ -61,3 +62,13 @@ func (u *UserRepository) GetAllUser() ([]*entity.User, error) {
 
 	return users, nil
 }
+
+func (u *UserRepository) GetCountPayment() (int64, error) {
+	var count int64
+	err := u.db.Debug().Model(&entity.User{}).Where("payment_transc IS NOT NULL").Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
