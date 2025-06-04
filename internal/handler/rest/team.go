@@ -48,3 +48,13 @@ func (r *Rest) GetTeamInfo(c *gin.Context) {
 	response.Success(c, http.StatusOK, "success get team members", teamInfo)
 
 }
+
+func (r *Rest) GetAllTeam(c *gin.Context) {
+	res, err := r.service.TeamService.GetAllTeam()
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to get all team informations", err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "success get all team informations", res)
+}
