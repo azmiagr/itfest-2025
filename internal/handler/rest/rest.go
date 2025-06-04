@@ -63,6 +63,7 @@ func (r *Rest) MountEndpoint() {
 	admin.Use(r.middleware.AuthenticateUser, r.middleware.OnlyAdmin)
 	admin.GET("/payment-status", r.GetUserPaymentStatus)
 	admin.GET("/total-participants", r.GetTotalParticipant)
+	admin.GET("/count", r.GetCount)
 	
 	excel := admin.Group("/excel")
 	excel.GET("/data-payment", r.GetExportPayment)
