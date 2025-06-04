@@ -32,3 +32,16 @@ type TeamMembersResponse struct {
 	FullName      string `json:"full_name"`
 	StudentNumber string `json:"student_number"`
 }
+
+type GetAllTeamsResponse struct {
+	TeamName        string           `json:"team_name"`
+	LeaderName      string           `json:"leader_name"`
+	University      string           `json:"university"`
+	PaymentStatus   string           `json:"payment_status"`
+	CompetitionName string           `json:"competition_name"`
+	TeamMembers     []GetTeamMembers `json:"team_members"`
+}
+
+type GetTeamMembers struct {
+	Name string `json:"name"`
+}

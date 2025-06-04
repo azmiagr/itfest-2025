@@ -14,17 +14,20 @@ import (
 type ITeamService interface {
 	UpsertTeam(userID uuid.UUID, param *model.UpsertTeamRequest) (*model.UpsertTeamResponse, error)
 	GetMembersByUserID(userID uuid.UUID) (*model.TeamInfoResponse, error)
+	GetAllTeam() ([]*model.GetAllTeamsResponse, error)
 }
 
 type TeamService struct {
 	db                    *gorm.DB
+	UserRepository        repository.IUserRepository
 	TeamRepository        repository.ITeamRepository
 	CompetitionRepository repository.ICompetitionRepository
 }
 
-func NewTeamService(teamRepository repository.ITeamRepository, competitionRepository repository.ICompetitionRepository) ITeamService {
+func NewTeamService(userRepository repository.IUserRepository, teamRepository repository.ITeamRepository, competitionRepository repository.ICompetitionRepository) ITeamService {
 	return &TeamService{
 		db:                    mariadb.Connection,
+		UserRepository:        userRepository,
 		TeamRepository:        teamRepository,
 		CompetitionRepository: competitionRepository,
 	}
@@ -147,4 +150,43 @@ func (t *TeamService) GetMembersByUserID(userID uuid.UUID) (*model.TeamInfoRespo
 	}
 
 	return &TeamInforResponse, nil
+}
+
+func (t *TeamService) GetAllTeam() ([]*model.GetAllTeamsResponse, error) {
+	var (
+		res []*model.GetAllTeamsResponse
+	)
+
+	tx := t.db.Begin()
+	defer tx.Rollback()
+
+	user, err := t.UserRepository.GetAllUser()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, v := range user {
+		competition, err := t.CompetitionRepository.GetCompetitionByID(tx, v.Team.CompetitionID)
+		if err != nil {
+			continue
+		}
+
+		var teamMembers []model.GetTeamMembers
+		for _, x := range v.Team.TeamMembers {
+			teamMembers = append(teamMembers, model.GetTeamMembers{
+				Name: x.MemberName,
+			})
+		}
+
+		res = append(res, &model.GetAllTeamsResponse{
+			TeamName:        v.Team.TeamName,
+			LeaderName:      v.FullName,
+			University:      v.University,
+			PaymentStatus:   v.Team.TeamStatus,
+			CompetitionName: competition.CompetitionName,
+			TeamMembers:     teamMembers,
+		})
+	}
+
+	return res, nil
 }
