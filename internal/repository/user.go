@@ -55,7 +55,7 @@ func (u *UserRepository) UpdateUser(tx *gorm.DB, user *entity.User) error {
 
 func (u *UserRepository) GetAllUser() ([]*entity.User, error) {
 	var users []*entity.User
-	err := u.db.Debug().Preload("Team").Find(&users).Error
+	err := u.db.Debug().Preload("Team.TeamMembers").Find(&users).Error
 	if err != nil {
 		return nil, err
 	}
@@ -71,4 +71,3 @@ func (u *UserRepository) GetCountPayment() (int64, error) {
 	}
 	return count, nil
 }
-
