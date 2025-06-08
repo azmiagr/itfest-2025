@@ -13,7 +13,7 @@ import (
 type IExcelService interface {
 	ExportExcelPayment() (string, error)
 	ExportExcelTeam() (string, error)
-	ExportExcelCompetitionByID(teamID int) (string, error)
+	ExportExcelCompetitionByID(competition int) (string, error)
 }
 
 type ExcelService struct {
@@ -58,7 +58,7 @@ func (s *ExcelService) ExportExcelPayment() (string, error) {
 	rowStyleOdd, err := f.NewStyle(&excelize.Style{
 		Alignment: &excelize.Alignment{
 			WrapText: true,
-			Vertical: "center", 
+			Vertical: "center",
 		},
 		Fill: excelize.Fill{Type: "pattern", Color: []string{"F2F2F2"}, Pattern: 1},
 		Border: []excelize.Border{
@@ -75,7 +75,7 @@ func (s *ExcelService) ExportExcelPayment() (string, error) {
 	rowStyleEven, err := f.NewStyle(&excelize.Style{
 		Alignment: &excelize.Alignment{
 			WrapText: true,
-			Vertical: "center", 
+			Vertical: "center",
 		},
 		Fill: excelize.Fill{Type: "pattern", Color: []string{"FFFFFF"}, Pattern: 1},
 		Border: []excelize.Border{
@@ -115,7 +115,7 @@ func (s *ExcelService) ExportExcelPayment() (string, error) {
 	}
 
 	no := 1
-	rowIndex := 0        
+	rowIndex := 0
 	userColorToggle := 0
 
 	for _, dt := range data {
@@ -149,7 +149,7 @@ func (s *ExcelService) ExportExcelTeam() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	f := excelize.NewFile()
 
 	headerStyle, _ := f.NewStyle(&excelize.Style{
@@ -272,18 +272,19 @@ func (s *ExcelService) ExportExcelTeam() (string, error) {
 	return fileName, nil
 }
 
-func (s *ExcelService) ExportExcelCompetitionByID(teamID int) (string, error) {
+func (s *ExcelService) ExportExcelCompetitionByID(competitionID int) (string, error) {
 	tx := s.db.Begin()
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
 		}
 	}()
-	competition, err := s.CompetitionRepository.GetCompetitionByID(tx, teamID)
+
+	competition, err := s.CompetitionRepository.GetCompetitionByID(tx, competitionID)
 	if err != nil {
 		return "", err
 	}
-	
+
 	f := excelize.NewFile()
 
 	headerStyle, _ := f.NewStyle(&excelize.Style{
@@ -334,7 +335,7 @@ func (s *ExcelService) ExportExcelCompetitionByID(teamID int) (string, error) {
 			tx.Rollback()
 			return "", err
 		}
-		
+
 		for i, member := range team.TeamMembers {
 			if i == 0 {
 				rows = append(rows, []interface{}{
