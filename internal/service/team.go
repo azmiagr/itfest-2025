@@ -179,6 +179,7 @@ func (t *TeamService) GetAllTeam() ([]*model.GetAllTeamsResponse, error) {
 		}
 
 		res = append(res, &model.GetAllTeamsResponse{
+			TeamID:          v.Team.TeamID.String(),
 			TeamName:        v.Team.TeamName,
 			LeaderName:      v.FullName,
 			University:      v.University,
