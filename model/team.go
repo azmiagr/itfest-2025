@@ -34,6 +34,7 @@ type TeamMembersResponse struct {
 }
 
 type GetAllTeamsResponse struct {
+	TeamID          string           `json:"team_id"`
 	TeamName        string           `json:"team_name"`
 	LeaderName      string           `json:"leader_name"`
 	University      string           `json:"university"`
