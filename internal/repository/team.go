@@ -2,6 +2,7 @@ package repository
 
 import (
 	"itfest-2025/entity"
+	"itfest-2025/model"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -18,6 +19,7 @@ type ITeamRepository interface {
 	DeleteTeamMembers(tx *gorm.DB, teamID uuid.UUID) error
 	GetTeamMemberByTeamID(tx *gorm.DB, teamID uuid.UUID) ([]*entity.TeamMember, error)
 	GetCount(tx *gorm.DB, competitionID string) (int64, error)
+	UpdateTeamStatus(tx *gorm.DB, req model.ReqUpdateStatusTeam) error
 }
 
 type TeamRepository struct {
@@ -124,4 +126,10 @@ func (t *TeamRepository) GetTeamMemberByTeamID(tx *gorm.DB, teamID uuid.UUID) ([
 	}
 
 	return members, nil
+}
+
+func (t *TeamRepository) UpdateTeamStatus(tx *gorm.DB, req model.ReqUpdateStatusTeam) error {
+	return tx.Debug().Model(&entity.Team{}).
+		Where("team_id = ?", req.TeamID).
+		Update("team_status", req.PaymentStatus).Error
 }
