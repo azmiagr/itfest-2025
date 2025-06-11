@@ -15,6 +15,7 @@ type ITeamService interface {
 	UpsertTeam(userID uuid.UUID, param *model.UpsertTeamRequest) (*model.UpsertTeamResponse, error)
 	GetMembersByUserID(userID uuid.UUID) (*model.TeamInfoResponse, error)
 	GetAllTeam() ([]*model.GetAllTeamsResponse, error)
+	UpdateTeamStatus(id string, req model.ReqUpdateStatusTeam) error
 }
 
 type TeamService struct {
@@ -190,4 +191,9 @@ func (t *TeamService) GetAllTeam() ([]*model.GetAllTeamsResponse, error) {
 	}
 
 	return res, nil
+}
+
+func (t *TeamService) UpdateTeamStatus(id string, req model.ReqUpdateStatusTeam) error {
+	req.TeamID = id
+	return t.TeamRepository.UpdateTeamStatus(t.db, req)
 }

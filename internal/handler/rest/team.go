@@ -58,3 +58,32 @@ func (r *Rest) GetAllTeam(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, "success get all team informations", res)
 }
+
+func (r *Rest) UpdateTeamStatus(c *gin.Context) {
+	var req model.ReqUpdateStatusTeam
+	teamID := c.Param("team_id")
+
+	if teamID == "" {
+		response.Error(c, http.StatusBadRequest, "team ID is required", nil)
+		return
+	}
+
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "failed to bind input", err)
+		return
+	}
+
+	if req.PaymentStatus != "belum terverifikasi" && req.PaymentStatus != "terverifikasi" {
+		response.Error(c, http.StatusBadRequest, "invalid payment status", nil)
+		return
+	}
+
+	err = r.service.TeamService.UpdateTeamStatus(teamID, req)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to update team status", err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "success update team status", nil)
+}
