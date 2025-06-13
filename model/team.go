@@ -46,3 +46,8 @@ type GetAllTeamsResponse struct {
 type GetTeamMembers struct {
 	Name string `json:"name"`
 }
+
+type ReqUpdateStatusTeam struct {
+	TeamID        string `json:"team_id"`
+	PaymentStatus string `json:"payment_status" binding:"oneof='belum terverifikasi' 'terverifikasi'"`
+}
