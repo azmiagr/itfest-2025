@@ -65,12 +65,13 @@ type ForgotPasswordRequest struct {
 
 type VerifyToken struct {
 	UserID uuid.UUID `json:"user_id"`
-	Token  string    `json:"token" binding:"required"`
+	OTP    string    `json:"otp" binding:"required"`
 }
 
 type ResetPasswordRequest struct {
-	NewPassword     string `json:"new_password" binding:"required,min=8"`
-	ConfirmPassword string `json:"confirm_password" binding:"required,min=8"`
+	UserID          uuid.UUID `json:"user_id"`
+	NewPassword     string    `json:"new_password" binding:"required,min=8"`
+	ConfirmPassword string    `json:"confirm_password" binding:"required,min=8"`
 }
 
 type UserTeamProfile struct {
