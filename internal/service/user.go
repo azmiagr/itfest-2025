@@ -27,9 +27,9 @@ type IUserService interface {
 	UpdateProfile(userID uuid.UUID, param model.UpdateProfile) (*model.UpdateProfile, error)
 	GetUserProfile(userID uuid.UUID) (model.UserProfile, error)
 	GetMyTeamProfile(userID uuid.UUID) (*model.UserTeamProfile, error)
-	ForgotPassword(email string) error
-	ChangePasswordAfterVerify(userID uuid.UUID, param model.ResetPasswordRequest) error
-	VerifyToken(param model.VerifyToken) error
+	ChangePassword(email string) (string, error)
+	ChangePasswordAfterVerify(param model.ResetPasswordRequest) error
+	VerifyOtpChangePassword(param model.VerifyToken) error
 	CompetitionRegistration(userID uuid.UUID, competitionID int, param model.CompetitionRegistrationRequest) error
 	GetUserPaymentStatus() ([]*model.GetUserPaymentStatus, error)
 	GetTotalParticipant() (*model.GetTotalParticipant, error)
@@ -379,7 +379,7 @@ func (u *UserService) GetMyTeamProfile(userID uuid.UUID) (*model.UserTeamProfile
 
 }
 
-func (u *UserService) ForgotPassword(email string) error {
+func (u *UserService) ChangePassword(email string) (string, error) {
 	tx := u.db.Begin()
 	defer tx.Rollback()
 
@@ -387,33 +387,38 @@ func (u *UserService) ForgotPassword(email string) error {
 		Email: email,
 	})
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	token := mail.GenerateRandomString(6)
+	otp := mail.GenerateCode()
 	err = u.OtpRepository.CreateOtp(tx, &entity.OtpCode{
 		OtpID:  uuid.New(),
 		UserID: user.UserID,
-		Code:   token,
+		Code:   otp,
 	})
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	err = mail.SendEmail(user.Email, "Reset Password Token", "Your Reset Password Code is "+token+".")
+	err = mail.SendEmail(user.Email, "Reset Password Token", "Your Reset Password Code is "+otp+".")
 	if err != nil {
-		return err
+		return "", err
+	}
+
+	jwtToken, err := u.JwtAuth.CreateJWTToken(user.UserID, false)
+	if err != nil {
+		return "", nil
 	}
 
 	err = tx.Commit().Error
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return jwtToken, nil
 }
 
-func (u *UserService) VerifyToken(param model.VerifyToken) error {
+func (u *UserService) VerifyOtpChangePassword(param model.VerifyToken) error {
 	tx := u.db.Begin()
 	defer tx.Rollback()
 
@@ -424,7 +429,7 @@ func (u *UserService) VerifyToken(param model.VerifyToken) error {
 		return err
 	}
 
-	if otp.Code != param.Token {
+	if otp.Code != param.OTP {
 		return errors.New("invalid token")
 	}
 
@@ -451,12 +456,12 @@ func (u *UserService) VerifyToken(param model.VerifyToken) error {
 	return nil
 }
 
-func (u *UserService) ChangePasswordAfterVerify(userID uuid.UUID, param model.ResetPasswordRequest) error {
+func (u *UserService) ChangePasswordAfterVerify(param model.ResetPasswordRequest) error {
 	tx := u.db.Begin()
 	defer tx.Rollback()
 
 	user, err := u.UserRepository.GetUser(model.UserParam{
-		UserID: userID,
+		UserID: param.UserID,
 	})
 	if err != nil {
 		return err
