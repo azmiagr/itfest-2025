@@ -145,7 +145,7 @@ func (r *Rest) GetMyTeamProfile(c *gin.Context) {
 	response.Success(c, http.StatusOK, "success to get my team profile", teamProfile)
 }
 
-func (r *Rest) ForgotPassword(c *gin.Context) {
+func (r *Rest) ChangePassword(c *gin.Context) {
 	var param model.ForgotPasswordRequest
 	err := c.ShouldBindJSON(&param)
 	if err != nil {
@@ -153,18 +153,16 @@ func (r *Rest) ForgotPassword(c *gin.Context) {
 		return
 	}
 
-	err = r.service.UserService.ForgotPassword(param.Email)
+	token, err := r.service.UserService.ChangePassword(param.Email)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "failed to send email verification", err)
 		return
 	}
 
-	response.Success(c, http.StatusOK, "success to send email verification password", nil)
+	response.Success(c, http.StatusOK, "success to send email verification password", token)
 }
 
-func (r *Rest) VerifyToken(c *gin.Context) {
-	user := c.MustGet("user").(*entity.User)
-
+func (r *Rest) VerifyOtpChangePassword(c *gin.Context) {
 	var param model.VerifyToken
 	err := c.ShouldBindJSON(&param)
 	if err != nil {
@@ -172,8 +170,7 @@ func (r *Rest) VerifyToken(c *gin.Context) {
 		return
 	}
 
-	param.UserID = user.UserID
-	err = r.service.UserService.VerifyToken(param)
+	err = r.service.UserService.VerifyOtpChangePassword(param)
 
 	if err != nil {
 		if err.Error() == "invalid token" {
@@ -192,8 +189,6 @@ func (r *Rest) VerifyToken(c *gin.Context) {
 }
 
 func (r *Rest) ChangePasswordAfterVerify(c *gin.Context) {
-	user := c.MustGet("user").(*entity.User)
-
 	var param model.ResetPasswordRequest
 	err := c.ShouldBindJSON(&param)
 	if err != nil {
@@ -201,7 +196,7 @@ func (r *Rest) ChangePasswordAfterVerify(c *gin.Context) {
 		return
 	}
 
-	err = r.service.UserService.ChangePasswordAfterVerify(user.UserID, param)
+	err = r.service.UserService.ChangePasswordAfterVerify(param)
 	if err != nil {
 		if err.Error() == "password mismatch" {
 			response.Error(c, http.StatusBadRequest, "please check your password", err)
