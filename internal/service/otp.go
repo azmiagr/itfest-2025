@@ -96,7 +96,7 @@ func (o *OtpService) ResendToken(userID uuid.UUID) error {
 		return err
 	}
 
-	if otp.UpdatedAt.After(time.Now().UTC().Add(-5 * time.Minute)) {
+	if otp.UpdatedAt.After(time.Now().UTC().Add(-1 * time.Minute)) {
 		return errors.New("you can only resend otp every 5 minutes")
 	}
 
