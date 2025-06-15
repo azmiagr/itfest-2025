@@ -99,7 +99,7 @@ func (o *OtpService) ResendOtpChangePassword(param model.GetOtp) error {
 		return errors.New("you can only resend otp every 5 minutes")
 	}
 
-	otp.Code = mail.GenerateRandomString(6)
+	otp.Code = mail.GenerateCode()
 
 	err = mail.SendEmail(user.Email, "Reset Password Token", "Your Reset Password Code is "+otp.Code+".")
 	if err != nil {
