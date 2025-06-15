@@ -424,6 +424,7 @@ func (u *UserService) VerifyOtpChangePassword(param model.VerifyToken) error {
 
 	otp, err := u.OtpRepository.GetOtp(tx, model.GetOtp{
 		UserID: param.UserID,
+		Code:   param.OTP,
 	})
 	if err != nil {
 		return err
