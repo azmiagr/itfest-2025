@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"itfest-2025/entity"
 	"itfest-2025/model"
 	"itfest-2025/pkg/response"
 	"net/http"
@@ -34,10 +33,15 @@ func (r *Rest) ResendOtp(c *gin.Context) {
 	response.Success(c, http.StatusOK, "success resend otp", nil)
 }
 
-func (r *Rest) ResendToken(c *gin.Context) {
-	user := c.MustGet("user").(*entity.User)
+func (r *Rest) ResendOtpChangePassword(c *gin.Context) {
+	var req model.GetOtp
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "failed to bind input", err)
+		return
+	}
 
-	err := r.service.OtpService.ResendToken(user.UserID)
+	err = r.service.OtpService.ResendOtpChangePassword(req)
 	if err != nil {
 		if err.Error() == "you can only resend otp every 5 minutes" {
 			response.Error(c, http.StatusForbidden, "failed to resend token", err)
