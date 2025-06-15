@@ -38,6 +38,7 @@ func (r *Rest) MountEndpoint() {
 	auth.POST("/forgot-password", r.ChangePassword)
 	auth.POST("/verify-otp", r.VerifyOtpChangePassword)
 	auth.POST("/reset-password", r.ChangePasswordAfterVerify)
+	auth.PATCH("/resend-token", r.ResendOtpChangePassword)
 
 	user := routerGroup.Group("/users")
 	user.Use(r.middleware.AuthenticateUser)
@@ -50,7 +51,6 @@ func (r *Rest) MountEndpoint() {
 	user.PATCH("/update-profile", r.UpdateProfile)
 	user.PATCH("/upsert-team", r.UpsertTeam)
 	user.PATCH("/change-password", r.ChangePasswordAfterVerify)
-	user.PATCH("/resend-token", r.ResendToken)
 
 	submission := routerGroup.Group("/submissions")
 	submission.Use(r.middleware.AuthenticateUser)

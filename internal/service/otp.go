@@ -9,13 +9,12 @@ import (
 	"itfest-2025/pkg/mail"
 	"time"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type IOtpService interface {
 	ResendOtp(param model.GetOtp) error
-	ResendToken(userID uuid.UUID) error
+	ResendOtpChangePassword(param model.GetOtp) error
 }
 
 type OtpService struct {
@@ -78,12 +77,12 @@ func (o *OtpService) ResendOtp(param model.GetOtp) error {
 	return nil
 }
 
-func (o *OtpService) ResendToken(userID uuid.UUID) error {
+func (o *OtpService) ResendOtpChangePassword(param model.GetOtp) error {
 	tx := o.db.Begin()
 	defer tx.Rollback()
 
 	user, err := o.UserRepository.GetUser(model.UserParam{
-		UserID: userID,
+		UserID: param.UserID,
 	})
 	if err != nil {
 		return err
@@ -100,7 +99,7 @@ func (o *OtpService) ResendToken(userID uuid.UUID) error {
 		return errors.New("you can only resend otp every 5 minutes")
 	}
 
-	otp.Code = mail.GenerateRandomString(6)
+	otp.Code = mail.GenerateCode()
 
 	err = mail.SendEmail(user.Email, "Reset Password Token", "Your Reset Password Code is "+otp.Code+".")
 	if err != nil {
