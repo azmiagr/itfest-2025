@@ -23,8 +23,16 @@ type ResSubmission struct {
 }
 
 type ResStage struct {
-	IDCurrentStage       int `json:"id_current_stage"`
-	NextStage            int `json:"next_stage"`
-	IDNextStage          int `json:"id_next_stage"`
+	IDCurrentStage    int       `json:"id_current_stage"`
+	NextStage         int       `json:"next_stage"`
+	IDNextStage       int       `json:"id_next_stage"`
 	DeadlineNextStage time.Time `json:"deadline_next_stage"`
+}
+
+type ResCurrentSubmission struct {
+	TeamProgressID int       `json:"team_progress_id"`
+	Stage          string    `json:"stage"`
+	Deadline       time.Time `json:"deadline"`
+	Status         string    `json:"status"`
+	GdriveLink     string    `json:"gdrive_link"`
 }

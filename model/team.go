@@ -1,6 +1,10 @@
 package model
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type AddTeamMemberRequest struct {
 	MemberName string    `json:"member_name" binding:"required"`
@@ -50,4 +54,20 @@ type GetTeamMembers struct {
 type ReqUpdateStatusTeam struct {
 	TeamID        string `json:"team_id"`
 	PaymentStatus string `json:"payment_status" binding:"oneof='belum terverifikasi' 'terverifikasi'"`
+}
+
+type TeamInfoResponseAdmin struct {
+	TeamName            string                `json:"team_name"`
+	CompetitionCategory string                `json:"competition_category"`
+	LeaderName          string                `json:"leader_name"`
+	StudentNumber       string                `json:"student_number"`
+	PaymentStatus       string                `json:"payment_status"`
+	PaymentTransc       string                `json:"payment_transaction"`
+	Members             []TeamMembersResponse `json:"members"`
+	StageNow            StageNow              `json:"progress"`
+}
+
+type StageNow struct {
+	Stage    string    `json:"stage_name"`
+	Deadline time.Time `json:"deadline"`
 }

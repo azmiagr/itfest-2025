@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func (r *Rest) UpsertTeam(c *gin.Context) {
@@ -86,4 +87,22 @@ func (r *Rest) UpdateTeamStatus(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, "success update team status", nil)
+}
+
+func (r *Rest) GetTeamByID(c *gin.Context) {
+	teamIDParam := c.Param("team_id")
+
+	if teamIDParam == "" {
+		response.Error(c, http.StatusBadRequest, "team ID is required", nil)
+		return
+	}
+	teamID, _ := uuid.Parse(teamIDParam)
+
+	data, err := r.service.TeamService.GetTeamByID(teamID)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to get team", err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "success get team", data)
 }

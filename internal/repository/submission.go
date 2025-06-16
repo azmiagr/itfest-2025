@@ -13,6 +13,7 @@ type ISubmissionRepository interface {
 	GetNextStage(currentOrder int, competitionID int) (entity.Stages, error)
 	GetCurrentStage(team *entity.Team) (entity.TeamProgress, error)
 	CreateSubmission(tx *gorm.DB, submission *entity.TeamProgress) error
+	GetStage(tx *gorm.DB, currentID int) (entity.Stages, error)
 }
 
 type SubmissionRepository struct {
@@ -84,4 +85,14 @@ func (t *SubmissionRepository) CreateSubmission(tx *gorm.DB, submission *entity.
 	}
 
 	return nil
+}
+
+func (t *SubmissionRepository) GetStage(tx *gorm.DB, StageID int) (entity.Stages, error) {
+	var stage entity.Stages
+	err := tx.First(&stage, StageID).Error
+	if err != nil {
+		return entity.Stages{}, err
+	}
+
+	return stage, nil
 }

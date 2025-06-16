@@ -74,7 +74,7 @@ func (t *TeamRepository) GetTeam(tx *gorm.DB) ([]*entity.Team, error) {
 
 func (t *TeamRepository) GetTeamByID(tx *gorm.DB, teamID uuid.UUID) (*entity.Team, error) {
 	var team entity.Team
-	err := tx.Debug().Preload("Competition").Preload("TeamMember").Where("team_id = ?", teamID).First(&team).Error
+	err := tx.Debug().Where("team_id = ?", teamID).First(&team).Error
 	if err != nil {
 		return nil, err
 	}
