@@ -74,6 +74,7 @@ type StageNow struct {
 
 type TeamDetailProgress struct {
 	PaymentStatus string   `json:payment_status`
+	CurrentStageID int      `json:"current_stageID"`
 	CurrentStage  string   `json:"current_stage"`
 	NextStage     string   `json:"next_stage"`
 	Stages        []Stages `stages`

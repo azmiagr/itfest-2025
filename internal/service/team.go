@@ -363,6 +363,7 @@ func (t *TeamService) GetDetailTeam(teamID uuid.UUID) (*model.TeamDetailProgress
 
 	return &model.TeamDetailProgress{
 		PaymentStatus: team.TeamStatus,
+		CurrentStageID:  currentStage.StageID,
 		CurrentStage:  currentStageName,
 		NextStage:     nextStageName,
 		Stages:        stages,
