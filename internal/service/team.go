@@ -16,6 +16,8 @@ type ITeamService interface {
 	GetMembersByUserID(userID uuid.UUID) (*model.TeamInfoResponse, error)
 	GetAllTeam() ([]*model.GetAllTeamsResponse, error)
 	UpdateTeamStatus(id string, req model.ReqUpdateStatusTeam) error
+	GetTeamByID(teamID uuid.UUID) (*model.TeamInfoResponseAdmin, error)
+	GetDetailTeam(teamID uuid.UUID) (*model.TeamDetailProgress, error)
 }
 
 type TeamService struct {
@@ -23,14 +25,16 @@ type TeamService struct {
 	UserRepository        repository.IUserRepository
 	TeamRepository        repository.ITeamRepository
 	CompetitionRepository repository.ICompetitionRepository
+	SubmissionRepository  repository.ISubmissionRepository
 }
 
-func NewTeamService(userRepository repository.IUserRepository, teamRepository repository.ITeamRepository, competitionRepository repository.ICompetitionRepository) ITeamService {
+func NewTeamService(userRepository repository.IUserRepository, teamRepository repository.ITeamRepository, competitionRepository repository.ICompetitionRepository, submissionRepository repository.ISubmissionRepository) ITeamService {
 	return &TeamService{
 		db:                    mariadb.Connection,
 		UserRepository:        userRepository,
 		TeamRepository:        teamRepository,
 		CompetitionRepository: competitionRepository,
+		SubmissionRepository:  submissionRepository,
 	}
 }
 
@@ -196,4 +200,172 @@ func (t *TeamService) GetAllTeam() ([]*model.GetAllTeamsResponse, error) {
 func (t *TeamService) UpdateTeamStatus(id string, req model.ReqUpdateStatusTeam) error {
 	req.TeamID = id
 	return t.TeamRepository.UpdateTeamStatus(t.db, req)
+}
+
+func (t *TeamService) GetTeamByID(teamID uuid.UUID) (*model.TeamInfoResponseAdmin, error) {
+	tx := t.db.Begin()
+	defer tx.Rollback()
+
+	team, err := t.TeamRepository.GetTeamByID(tx, teamID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) || team == nil {
+			return &model.TeamInfoResponseAdmin{}, nil
+		}
+		return nil, err
+	}
+
+	user, err := t.UserRepository.GetUser(model.UserParam{
+		UserID: team.UserID,
+	})
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) || user == nil {
+			user = &entity.User{}
+		} else {
+			return nil, err
+		}
+	}
+
+	members, err := t.TeamRepository.GetTeamMemberByTeamID(tx, team.TeamID)
+	if err != nil {
+		members = []*entity.TeamMember{}
+	}
+
+	var memberResponse []model.TeamMembersResponse
+	for _, v := range members {
+		memberResponse = append(memberResponse, model.TeamMembersResponse{
+			FullName:      v.MemberName,
+			StudentNumber: v.StudentNumber,
+		})
+	}
+
+	competition, err := t.CompetitionRepository.GetCompetitionByID(tx, team.CompetitionID)
+	competitionName := ""
+	if err == nil && competition != nil {
+		competitionName = competition.CompetitionName
+	} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+
+	var data model.ResStage
+	currentStage, err := t.SubmissionRepository.GetCurrentStage(team)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		firstStage, err := t.SubmissionRepository.GetFirstStage(team.CompetitionID)
+		if err != nil {
+			return nil, err
+		}
+
+		data = model.ResStage{
+			IDCurrentStage:    0,
+			NextStage:         firstStage.StageOrder,
+			IDNextStage:       firstStage.StageID,
+			DeadlineNextStage: firstStage.Deadline,
+		}
+	} else {
+		nextStage, err := t.SubmissionRepository.GetNextStage(currentStage.StageID, team.CompetitionID)
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+	
+		data = model.ResStage{
+			IDCurrentStage:    currentStage.StageID,
+			NextStage:         nextStage.StageOrder,
+			IDNextStage:       nextStage.StageID,
+			DeadlineNextStage: nextStage.Deadline,
+		}
+	}
+
+	stage, err := t.SubmissionRepository.GetStage(tx, data.NextStage)
+	if err != nil {
+		return nil, err
+	}
+
+	response := model.TeamInfoResponseAdmin{
+		TeamName:            team.TeamName,
+		CompetitionCategory: competitionName,
+		LeaderName:          user.FullName,
+		StudentNumber:       user.StudentNumber,
+		PaymentStatus:       team.TeamStatus,
+		PaymentTransc:       user.PaymentTransc,
+		Members:             memberResponse,
+		StageNow: model.StageNow{
+			Stage:    stage.StageName,
+			Deadline: data.DeadlineNextStage,
+		},
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+func (t *TeamService) GetDetailTeam(teamID uuid.UUID) (*model.TeamDetailProgress, error) {
+	tx := t.db.Begin()
+	defer tx.Rollback()
+
+	stages, err := t.SubmissionRepository.GetSubmissionAllStage(tx, teamID)
+	if err != nil {
+		return &model.TeamDetailProgress{}, err
+	}
+
+	team, err := t.TeamRepository.GetTeamByID(tx, teamID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) || team == nil {
+			return &model.TeamDetailProgress{}, nil
+		}
+		return nil, err
+	}
+
+	var data model.ResStage
+	var currentStageName string
+	var nextStageName string
+
+	currentStage, err := t.SubmissionRepository.GetCurrentStage(team)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		firstStage, err := t.SubmissionRepository.GetFirstStage(team.CompetitionID)
+		if err != nil {
+			return nil, err
+		}
+
+		data = model.ResStage{
+			IDCurrentStage:    0,
+			NextStage:         firstStage.StageOrder,
+			IDNextStage:       firstStage.StageID,
+			DeadlineNextStage: firstStage.Deadline,
+		}
+
+		nextStageName = firstStage.StageName
+		currentStageName = ""
+	} else {
+		data = model.ResStage{
+			IDCurrentStage: currentStage.StageID,
+		}
+		stage, err := t.SubmissionRepository.GetStage(tx, currentStage.StageID)
+		if err != nil {
+			return nil, err
+		}
+		currentStageName = stage.StageName
+
+		nextStage, err := t.SubmissionRepository.GetNextStage(currentStage.StageID, team.CompetitionID)
+		if err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, err
+			}
+			nextStageName = ""
+		} else {
+			data.NextStage = nextStage.StageOrder
+			data.IDNextStage = nextStage.StageID
+			data.DeadlineNextStage = nextStage.Deadline
+			nextStageName = nextStage.StageName
+		}
+	}
+
+	return &model.TeamDetailProgress{
+		PaymentStatus: team.TeamStatus,
+		CurrentStageID:  currentStage.StageID,
+		CurrentStage:  currentStageName,
+		NextStage:     nextStageName,
+		Stages:        stages,
+	}, nil
 }

@@ -68,6 +68,8 @@ func (r *Rest) MountEndpoint() {
 	admin.GET("/total-participants", r.GetTotalParticipant)
 	admin.GET("/count", r.GetCount)
 	admin.GET("/teams", r.GetAllTeam)
+	admin.GET("/teams/:team_id", r.GetTeamByID)
+	admin.GET("/teams/:team_id/progress", r.GetTeamByIDProgress)
 	admin.PATCH("/teams/:team_id", r.UpdateTeamStatus)
 
 	excel := admin.Group("/excel")

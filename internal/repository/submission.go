@@ -4,6 +4,7 @@ import (
 	"itfest-2025/entity"
 	"itfest-2025/model"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -13,6 +14,8 @@ type ISubmissionRepository interface {
 	GetNextStage(currentOrder int, competitionID int) (entity.Stages, error)
 	GetCurrentStage(team *entity.Team) (entity.TeamProgress, error)
 	CreateSubmission(tx *gorm.DB, submission *entity.TeamProgress) error
+	GetStage(tx *gorm.DB, currentID int) (entity.Stages, error)
+	GetSubmissionAllStage(tx *gorm.DB, teamID uuid.UUID) ([]model.Stages, error)
 }
 
 type SubmissionRepository struct {
@@ -85,3 +88,31 @@ func (t *SubmissionRepository) CreateSubmission(tx *gorm.DB, submission *entity.
 
 	return nil
 }
+
+func (t *SubmissionRepository) GetStage(tx *gorm.DB, StageID int) (entity.Stages, error) {
+	var stage entity.Stages
+	err := tx.First(&stage, StageID).Error
+	if err != nil {
+		return entity.Stages{}, err
+	}
+
+	return stage, nil
+}
+
+func (t *SubmissionRepository) GetSubmissionAllStage(tx *gorm.DB, teamID uuid.UUID) ([]model.Stages, error) {
+	var stages []model.Stages
+
+	err := tx.
+		Table("stages").
+		Select("stages.stage_name AS stage, stages.deadline AS deadline, team_progresses.gdrive_link AS gdrive_link").
+		Joins("LEFT JOIN team_progresses ON team_progresses.stage_id = stages.stage_id AND team_progresses.team_id = ?", teamID).
+		Order("stages.stage_order ASC").
+		Scan(&stages).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return stages, nil
+}
+
