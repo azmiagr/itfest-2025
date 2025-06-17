@@ -71,3 +71,16 @@ type StageNow struct {
 	Stage    string    `json:"stage_name"`
 	Deadline time.Time `json:"deadline"`
 }
+
+type TeamDetailProgress struct {
+	PaymentStatus string   `json:payment_status`
+	CurrentStage  string   `json:"current_stage"`
+	NextStage     string   `json:"next_stage"`
+	Stages        []Stages `stages`
+}
+
+type Stages struct {
+	Stage      string    `json:"stage_name"`
+	Deadline   time.Time `json:"stage_deadline"`
+	GdriveLink string    `json:"link_submission"`
+}

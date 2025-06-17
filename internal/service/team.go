@@ -17,6 +17,7 @@ type ITeamService interface {
 	GetAllTeam() ([]*model.GetAllTeamsResponse, error)
 	UpdateTeamStatus(id string, req model.ReqUpdateStatusTeam) error
 	GetTeamByID(teamID uuid.UUID) (*model.TeamInfoResponseAdmin, error)
+	GetDetailTeam(teamID uuid.UUID) (*model.TeamDetailProgress, error)
 }
 
 type TeamService struct {
@@ -297,4 +298,73 @@ func (t *TeamService) GetTeamByID(teamID uuid.UUID) (*model.TeamInfoResponseAdmi
 	}
 
 	return &response, nil
+}
+
+func (t *TeamService) GetDetailTeam(teamID uuid.UUID) (*model.TeamDetailProgress, error) {
+	tx := t.db.Begin()
+	defer tx.Rollback()
+
+	stages, err := t.SubmissionRepository.GetSubmissionAllStage(tx, teamID)
+	if err != nil {
+		return &model.TeamDetailProgress{}, err
+	}
+
+	team, err := t.TeamRepository.GetTeamByID(tx, teamID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) || team == nil {
+			return &model.TeamDetailProgress{}, nil
+		}
+		return nil, err
+	}
+
+	var data model.ResStage
+	var currentStageName string
+	var nextStageName string
+
+	currentStage, err := t.SubmissionRepository.GetCurrentStage(team)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		firstStage, err := t.SubmissionRepository.GetFirstStage(team.CompetitionID)
+		if err != nil {
+			return nil, err
+		}
+
+		data = model.ResStage{
+			IDCurrentStage:    0,
+			NextStage:         firstStage.StageOrder,
+			IDNextStage:       firstStage.StageID,
+			DeadlineNextStage: firstStage.Deadline,
+		}
+
+		nextStageName = firstStage.StageName
+		currentStageName = ""
+	} else {
+		data = model.ResStage{
+			IDCurrentStage: currentStage.StageID,
+		}
+		stage, err := t.SubmissionRepository.GetStage(tx, currentStage.StageID)
+		if err != nil {
+			return nil, err
+		}
+		currentStageName = stage.StageName
+
+		nextStage, err := t.SubmissionRepository.GetNextStage(currentStage.StageID, team.CompetitionID)
+		if err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, err
+			}
+			nextStageName = ""
+		} else {
+			data.NextStage = nextStage.StageOrder
+			data.IDNextStage = nextStage.StageID
+			data.DeadlineNextStage = nextStage.Deadline
+			nextStageName = nextStage.StageName
+		}
+	}
+
+	return &model.TeamDetailProgress{
+		PaymentStatus: team.TeamStatus,
+		CurrentStage:  currentStageName,
+		NextStage:     nextStageName,
+		Stages:        stages,
+	}, nil
 }

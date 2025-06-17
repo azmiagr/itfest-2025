@@ -106,3 +106,21 @@ func (r *Rest) GetTeamByID(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, "success get team", data)
 }
+
+func (r *Rest) GetTeamByIDProgress(c *gin.Context) {
+	teamIDParam := c.Param("team_id")
+
+	if teamIDParam == "" {
+		response.Error(c, http.StatusBadRequest, "team ID is required", nil)
+		return
+	}
+	teamID, _ := uuid.Parse(teamIDParam)
+
+	data, err := r.service.TeamService.GetDetailTeam(teamID)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to get progress team", err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "success get progress team", data)
+}
