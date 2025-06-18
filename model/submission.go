@@ -1,10 +1,19 @@
 package model
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+var (
+	ErrUnverifiedAccount      = errors.New("submission ditolak karena belum terverifikasi")
+	ErrNotPassedPrevious      = errors.New("submission ditolak karena stage sebelumnya tidak lolos")
+	ErrSubmissionProcessing   = errors.New("submission sedang diproses")
+	ErrPassedDeadline         = errors.New("submission ditolak karena sudah melewati deadline")
+)
+
 
 type ReqSubmission struct {
 	GdriveLink string `json:"gdrive_link" binding:"required,url"`

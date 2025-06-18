@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"errors"
 	"itfest-2025/entity"
 	"itfest-2025/model"
 	"itfest-2025/pkg/response"
@@ -50,6 +51,19 @@ func (r *Rest) CreateSubmission(c *gin.Context) {
 
 	err = r.service.SubmissionService.CreateSubmission(user.UserID, &param)
 	if err != nil {
+		if errors.Is(err, model.ErrUnverifiedAccount) {
+			response.Error(c, http.StatusForbidden, "cannot add another team member", err)
+			return
+		} else if errors.Is(err, model.ErrNotPassedPrevious) {
+			response.Error(c, http.StatusUnprocessableEntity, "submission failed", err)
+			return
+		} else if errors.Is(err, model.ErrSubmissionProcessing) {
+			response.Error(c, http.StatusConflict, "submission sedang diproses", err)
+			return
+		} else if errors.Is(err, model.ErrPassedDeadline) {
+			response.Error(c, http.StatusGone, "submission melewati deadline", err)
+			return
+		}
 		response.Error(c, http.StatusInternalServerError, "failed to create submission", err)
 		return
 	}
