@@ -279,6 +279,28 @@ func (t *TeamService) GetTeamByID(teamID uuid.UUID) (*model.TeamInfoResponseAdmi
 		stage = entity.Stages{}
 	}
 
+	submission := ""
+	dataSubmission, err := t.SubmissionRepository.GetSubmission(&model.ReqFilterSubmission{
+		TeamID:  team.TeamID.String(),
+		StageID: stage.StageID,
+	})
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			submission = "diproses"
+		} else {
+			return nil, err 
+		}
+	} else if len(dataSubmission) == 0 {
+		submission = "diproses"
+	} else {
+		submission = dataSubmission[0].Status
+	}
+
+	if team.TeamStatus != "terverifikasi" {
+		submission = "Akun belum terverifikasi"
+	}
+
 	response := model.TeamInfoResponseAdmin{
 		TeamName:            team.TeamName,
 		CompetitionCategory: competitionName,
@@ -289,6 +311,7 @@ func (t *TeamService) GetTeamByID(teamID uuid.UUID) (*model.TeamInfoResponseAdmi
 		Members:             memberResponse,
 		StageNow: model.StageNow{
 			Stage:    stage.StageName,
+			Status:   submission,
 			Deadline: stage.Deadline,
 		},
 	}
