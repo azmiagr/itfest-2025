@@ -76,6 +76,7 @@ type ResetPasswordRequest struct {
 
 type UserTeamProfile struct {
 	LeaderName          string           `json:"leader_name"`
+	TeamName            string           `json:"team_name"`
 	StudentNumber       string           `json:"student_number"`
 	CompetitionCategory string           `json:"competition_category"`
 	Deadline            time.Time        `json:"deadline"`
