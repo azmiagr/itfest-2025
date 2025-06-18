@@ -365,6 +365,7 @@ func (u *UserService) GetMyTeamProfile(userID uuid.UUID) (*model.UserTeamProfile
 
 	TeamProfileResponse := &model.UserTeamProfile{
 		LeaderName:          user.FullName,
+		TeamName:            team.TeamName,
 		StudentNumber:       user.StudentNumber,
 		CompetitionCategory: competititon.CompetitionName,
 		Members:             memberResponse,
