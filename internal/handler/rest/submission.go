@@ -56,3 +56,37 @@ func (r *Rest) CreateSubmission(c *gin.Context) {
 
 	response.Success(c, http.StatusCreated, "success to create new submission", nil)
 }
+
+func (r *Rest) UpdateStatusSubmission(c *gin.Context) {
+	var req model.RequestUpdateStatusSubmission
+	teamID := c.Param("team_id")
+	stageID := c.Param("stage_id")
+
+	if teamID == "" {
+		response.Error(c, http.StatusBadRequest, "team ID is invalid", nil)
+		return
+	}
+	if stageID == "" || stageID == "0" {
+		response.Error(c, http.StatusBadRequest, "stage ID is invalid", nil)
+		return
+	}
+
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "failed to bind input", err)
+		return
+	}
+
+	if req.SubmissionStatus != "lolos" && req.SubmissionStatus != "tidak lolos" {
+		response.Error(c, http.StatusBadRequest, "invalid Submission status", nil)
+		return
+	}
+
+	err = r.service.SubmissionService.UpdateStatusSubmission(teamID, stageID, &req)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to update team status", err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "success update team status", nil)
+}

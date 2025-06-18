@@ -36,3 +36,7 @@ type ResCurrentSubmission struct {
 	Status         string    `json:"status"`
 	GdriveLink     string    `json:"gdrive_link"`
 }
+
+type RequestUpdateStatusSubmission struct {
+	SubmissionStatus string `json:"submission_status" binding:"oneof='diproses' 'lolos' 'tidak lolos'"`
+}

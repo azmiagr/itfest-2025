@@ -255,7 +255,7 @@ func (t *TeamService) GetTeamByID(teamID uuid.UUID) (*model.TeamInfoResponseAdmi
 		}
 
 		data = model.ResStage{
-			IDCurrentStage:    0,
+			IDCurrentStage:    1,
 			NextStage:         firstStage.StageOrder,
 			IDNextStage:       firstStage.StageID,
 			DeadlineNextStage: firstStage.Deadline,
@@ -265,7 +265,7 @@ func (t *TeamService) GetTeamByID(teamID uuid.UUID) (*model.TeamInfoResponseAdmi
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, err
 		}
-	
+
 		data = model.ResStage{
 			IDCurrentStage:    currentStage.StageID,
 			NextStage:         nextStage.StageOrder,
@@ -274,9 +274,9 @@ func (t *TeamService) GetTeamByID(teamID uuid.UUID) (*model.TeamInfoResponseAdmi
 		}
 	}
 
-	stage, err := t.SubmissionRepository.GetStage(tx, data.NextStage)
+	stage, err := t.SubmissionRepository.GetStage(tx, data.IDCurrentStage)
 	if err != nil {
-		return nil, err
+		stage = entity.Stages{}
 	}
 
 	response := model.TeamInfoResponseAdmin{
@@ -289,7 +289,7 @@ func (t *TeamService) GetTeamByID(teamID uuid.UUID) (*model.TeamInfoResponseAdmi
 		Members:             memberResponse,
 		StageNow: model.StageNow{
 			Stage:    stage.StageName,
-			Deadline: data.DeadlineNextStage,
+			Deadline: stage.Deadline,
 		},
 	}
 
@@ -304,17 +304,17 @@ func (t *TeamService) GetDetailTeam(teamID uuid.UUID) (*model.TeamDetailProgress
 	tx := t.db.Begin()
 	defer tx.Rollback()
 
-	stages, err := t.SubmissionRepository.GetSubmissionAllStage(tx, teamID)
-	if err != nil {
-		return &model.TeamDetailProgress{}, err
-	}
-
 	team, err := t.TeamRepository.GetTeamByID(tx, teamID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) || team == nil {
 			return &model.TeamDetailProgress{}, nil
 		}
 		return nil, err
+	}
+
+	stages, err := t.SubmissionRepository.GetSubmissionAllStage(tx, teamID, team.CompetitionID)
+	if err != nil {
+		return &model.TeamDetailProgress{}, err
 	}
 
 	var data model.ResStage
@@ -362,10 +362,10 @@ func (t *TeamService) GetDetailTeam(teamID uuid.UUID) (*model.TeamDetailProgress
 	}
 
 	return &model.TeamDetailProgress{
-		PaymentStatus: team.TeamStatus,
-		CurrentStageID:  currentStage.StageID,
-		CurrentStage:  currentStageName,
-		NextStage:     nextStageName,
-		Stages:        stages,
+		PaymentStatus:  team.TeamStatus,
+		CurrentStageID: currentStage.StageID,
+		CurrentStage:   currentStageName,
+		NextStage:      nextStageName,
+		Stages:         stages,
 	}, nil
 }

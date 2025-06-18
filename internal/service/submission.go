@@ -16,6 +16,7 @@ type ISubmissionService interface {
 	GetSubmission(param *model.ReqFilterSubmission) ([]entity.TeamProgress, error)
 	GetCurrentStage(userID uuid.UUID) (model.ResStage, error)
 	CreateSubmission(userID uuid.UUID, param *model.ReqSubmission) error
+	UpdateStatusSubmission(teamID string, stageID string, param *model.RequestUpdateStatusSubmission) error
 }
 
 type SubmissionService struct {
@@ -119,4 +120,8 @@ func (s *SubmissionService) CreateSubmission(userID uuid.UUID, param *model.ReqS
 	}
 
 	return tx.Commit().Error
+}
+
+func (s *SubmissionService) UpdateStatusSubmission(teamID string, stageID string, param *model.RequestUpdateStatusSubmission) error {
+	return s.SubmissionRepository.UpdateStatusSubmission(s.db, teamID, stageID, *param)
 }
