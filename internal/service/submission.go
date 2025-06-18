@@ -61,12 +61,21 @@ func (s *SubmissionService) GetCurrentStage(userID uuid.UUID) (model.ResStage, e
 			DeadlineNextStage: firstStage.Deadline,
 		}
 		return data, nil
-	} else if currentStage.Status == "diproses" {
-		return data, errors.New("submission sedang diproses")
-	} else if currentStage.Status == "tidak lolos" {
-		return data, errors.New("tidak lolos ke tahap selanjutnya")
 	} else if err != nil {
 		return data, err
+	}
+	submission, err := s.SubmissionRepository.GetSubmission(&model.ReqFilterSubmission{
+		StageID: data.IDCurrentStage,
+		TeamID: team.TeamID.String(),
+	})
+
+	if submission[0].Status == "diproses" || submission[0].Status == "tidak lolos" {
+		return model.ResStage{
+			IDCurrentStage:    currentStage.StageID,
+			NextStage:         0,
+			IDNextStage:       0,
+			DeadlineNextStage: time.Time{},
+		}, nil
 	}
 
 	nextStage, err := s.SubmissionRepository.GetNextStage(currentStage.StageID, team.CompetitionID)
@@ -98,6 +107,17 @@ func (s *SubmissionService) CreateSubmission(userID uuid.UUID, param *model.ReqS
 	if err != nil {
 		tx.Rollback()
 		return err
+	}
+	submission, err := s.SubmissionRepository.GetSubmission(&model.ReqFilterSubmission{
+		StageID: stage.IDCurrentStage,
+		TeamID: team.TeamID.String(),
+	})
+
+	if submission[0].Status == "tidak lolos" {
+		return errors.New("submission ditolak karena stage sebelumnya tidak lolos")
+	}
+	if submission[0].Status == "diproses" {
+		return errors.New("submission sedang diproses")
 	}
 
 	if time.Now().After(stage.DeadlineNextStage) {
