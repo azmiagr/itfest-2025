@@ -114,18 +114,18 @@ func (s *SubmissionService) CreateSubmission(userID uuid.UUID, param *model.ReqS
 	})
 
 	if submission[0].Status == "tidak lolos" {
-		return errors.New("submission ditolak karena stage sebelumnya tidak lolos")
+		return model.ErrNotPassedPrevious
 	}
 	if submission[0].Status == "diproses" {
-		return errors.New("submission sedang diproses")
+		return model.ErrSubmissionProcessing
 	}
-
 	if time.Now().After(stage.DeadlineNextStage) {
-		return errors.New("submission ditolak karena sudah melewati deadline")
+		return model.ErrPassedDeadline
 	}
 	if team.TeamStatus == "belum terverifikasi" {
-		return errors.New("submission ditolak karena belum terverifikasi")
+		return model.ErrUnverifiedAccount
 	}
+
 
 	newSubmission := &entity.TeamProgress{
 		StageID:    stage.IDNextStage,
