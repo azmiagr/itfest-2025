@@ -44,8 +44,9 @@ func (a *AnnouncementService) GetAnnouncement() ([]*model.ResponseAnnouncement, 
 	for _, v := range data {
 		response = append(response, &model.ResponseAnnouncement{
 			AnnouncementID: v.AnnouncementID.String(),
-			Message: v.Description,
-		}) 
+			Message:        v.Description,
+			Date:           v.CreatedAt,
+		})
 	}
 
 	return response, nil
@@ -65,10 +66,10 @@ func (a *AnnouncementService) SendAnnouncement(req model.RequestAnnouncement) er
 
 	err = a.AnnouncementRepository.CreateAnnouncement(tx, entity.Announcement{
 		AnnouncementID: uuid.New(),
-		Title: "Announcement",
-		Description: req.Message,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		Title:          "Announcement",
+		Description:    req.Message,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
 	})
 	if err != nil {
 		return err
