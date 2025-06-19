@@ -73,6 +73,10 @@ func (r *Rest) MountEndpoint() {
 	admin.PATCH("/teams/:team_id/progress/:stage_id", r.UpdateStatusSubmission)
 	admin.PATCH("/teams/:team_id", r.UpdateTeamStatus)
 
+	announcement := admin.Group("/announcement")
+	announcement.GET("/", r.GetAnnouncement)
+	announcement.POST("/", r.CreateAnnouncement)
+
 	excel := admin.Group("/excel")
 	excel.GET("/data-payment", r.GetExportPayment)
 	excel.GET("/data-team", r.GetExportTeam)
