@@ -196,7 +196,7 @@ func (a *AnnouncementService) SendAnnouncement(req model.RequestAnnouncement) er
 
 								<tr>
 									<td align="center" style="padding: 0 20px 40px 20px; font-family: Arial, sans-serif; font-size: 12px; line-height: 1.5; color: #a0a0a0;" class="footer-text">
-										Keluarga Besar Mahasiswa Sistem Informasi
+										Keluarga Besar Mahasiswa Departemen Sistem Informasi
 										<br>
 										Universitas Brawijaya
 									</td>
