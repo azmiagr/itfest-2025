@@ -8,6 +8,7 @@ type Repository struct {
 	OtpRepository         IOtpRepository
 	CompetitionRepository ICompetitionRepository
 	SubmissionRepository  ISubmissionRepository
+	AnnouncementRepository  IAnnouncementRepository
 }
 
 func NewRepository(db *gorm.DB) *Repository {
@@ -17,5 +18,6 @@ func NewRepository(db *gorm.DB) *Repository {
 		OtpRepository:         NewOtpRepository(db),
 		CompetitionRepository: NewCompetitionRepository(db),
 		SubmissionRepository:  NewSubmissionRepository(db),
+		AnnouncementRepository:  NewAnnouncementRepository(db),
 	}
 }

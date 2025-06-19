@@ -16,7 +16,14 @@ func SendEmail(to, subject, message string) error {
 	SMTP_PASSWORD := os.Getenv("SMTP_PASSWORD")
 
 	addr := fmt.Sprintf("%s:%s", SMTP_HOST, SMTP_PORT)
-	msg := fmt.Sprintf("From: No Reply <%s>\nTo: %s\nSubject:%s\n\n%s", SMTP_USERNAME, to, subject, message)
+	msg := fmt.Sprintf(
+		"From: No Reply <%s>\r\n"+
+			"To: %s\r\n"+
+			"Subject: %s\r\n"+
+			"MIME-Version: 1.0\r\n"+
+			"Content-Type: text/html; charset=\"UTF-8\"\r\n"+
+			"\r\n%s", // body setelah header
+		SMTP_USERNAME, to, subject, message)
 	err := smtp.SendMail(addr,
 		smtp.PlainAuth("", SMTP_USERNAME, SMTP_PASSWORD, SMTP_HOST),
 		SMTP_USERNAME, []string{to}, []byte(msg))
