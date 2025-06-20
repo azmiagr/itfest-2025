@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"errors"
 	"itfest-2025/entity"
 	"itfest-2025/model"
 	"itfest-2025/pkg/response"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func (r *Rest) UpsertTeam(c *gin.Context) {
@@ -118,6 +120,22 @@ func (r *Rest) GetTeamByIDProgress(c *gin.Context) {
 
 	data, err := r.service.TeamService.GetDetailTeam(teamID)
 	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to get progress team", err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "success get progress team", data)
+}
+
+func (r *Rest) GetProgressByUserID(c *gin.Context) {
+	userID := c.MustGet("user").(*entity.User)
+
+	data, err := r.service.TeamService.GetProgressByUserID(userID.UserID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			response.Error(c, http.StatusNotFound, "failed to get progress team", err)
+			return
+		}
 		response.Error(c, http.StatusInternalServerError, "failed to get progress team", err)
 		return
 	}

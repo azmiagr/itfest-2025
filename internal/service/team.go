@@ -18,6 +18,7 @@ type ITeamService interface {
 	UpdateTeamStatus(id string, req model.ReqUpdateStatusTeam) error
 	GetTeamByID(teamID uuid.UUID) (*model.TeamInfoResponseAdmin, error)
 	GetDetailTeam(teamID uuid.UUID) (*model.TeamDetailProgress, error)
+	GetProgressByUserID(userID uuid.UUID) (*model.TeamDetailProgress, error)
 }
 
 type TeamService struct {
@@ -335,9 +336,19 @@ func (t *TeamService) GetDetailTeam(teamID uuid.UUID) (*model.TeamDetailProgress
 		return nil, err
 	}
 
-	stages, err := t.SubmissionRepository.GetSubmissionAllStage(tx, teamID, team.CompetitionID)
+	competition, err := t.CompetitionRepository.GetCompetitionByID(tx, team.CompetitionID)
+	if err != nil {
+		return nil, err
+	}
+
+	var stages []model.Stages
+	dataSubmission, err := t.SubmissionRepository.GetSubmissionAllStage(tx, team.TeamID, team.CompetitionID)
 	if err != nil {
 		return &model.TeamDetailProgress{}, err
+	}
+	stages = nil
+	if len(dataSubmission) > 0 {
+		stages = dataSubmission
 	}
 
 	var data model.ResStage
@@ -348,6 +359,16 @@ func (t *TeamService) GetDetailTeam(teamID uuid.UUID) (*model.TeamDetailProgress
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		firstStage, err := t.SubmissionRepository.GetFirstStage(team.CompetitionID)
 		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return &model.TeamDetailProgress{
+					TeamCompetition: competition.CompetitionName,
+					PaymentStatus:   team.TeamStatus,
+					CurrentStageID:  0,
+					CurrentStage:    "",
+					NextStage:       "",
+					Stages:          stages,
+				}, nil
+			}
 			return nil, err
 		}
 
@@ -357,9 +378,10 @@ func (t *TeamService) GetDetailTeam(teamID uuid.UUID) (*model.TeamDetailProgress
 			IDNextStage:       firstStage.StageID,
 			DeadlineNextStage: firstStage.Deadline,
 		}
-
 		nextStageName = firstStage.StageName
 		currentStageName = ""
+	} else if err != nil {
+		return nil, err
 	} else {
 		data = model.ResStage{
 			IDCurrentStage: currentStage.StageID,
@@ -385,6 +407,99 @@ func (t *TeamService) GetDetailTeam(teamID uuid.UUID) (*model.TeamDetailProgress
 	}
 
 	return &model.TeamDetailProgress{
+		TeamCompetition: competition.CompetitionName,
+		PaymentStatus:  team.TeamStatus,
+		CurrentStageID: currentStage.StageID,
+		CurrentStage:   currentStageName,
+		NextStage:      nextStageName,
+		Stages:         stages,
+	}, nil
+}
+
+func (t *TeamService) GetProgressByUserID(userID uuid.UUID) (*model.TeamDetailProgress, error) {
+	tx := t.db.Begin()
+	defer tx.Rollback()
+
+	team, err := t.TeamRepository.GetTeamByUserID(tx, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) || team == nil {
+			return &model.TeamDetailProgress{}, nil
+		}
+		return nil, err
+	}
+
+	competition, err := t.CompetitionRepository.GetCompetitionByID(tx, team.CompetitionID)
+	if err != nil {
+		return nil, err
+	}
+
+	var stages []model.Stages
+	dataSubmission, err := t.SubmissionRepository.GetSubmissionAllStage(tx, team.TeamID, team.CompetitionID)
+	if err != nil {
+		return &model.TeamDetailProgress{}, err
+	}
+	stages = nil
+	if len(dataSubmission) > 0 {
+		stages = dataSubmission
+	}
+
+	var data model.ResStage
+	var currentStageName string
+	var nextStageName string
+
+	currentStage, err := t.SubmissionRepository.GetCurrentStage(team)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		firstStage, err := t.SubmissionRepository.GetFirstStage(team.CompetitionID)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return &model.TeamDetailProgress{
+					TeamCompetition: competition.CompetitionName,
+					PaymentStatus:   team.TeamStatus,
+					CurrentStageID:  0,
+					CurrentStage:    "",
+					NextStage:       "",
+					Stages:          stages,
+				}, nil
+			}
+			return nil, err
+		}
+
+		data = model.ResStage{
+			IDCurrentStage:    0,
+			NextStage:         firstStage.StageOrder,
+			IDNextStage:       firstStage.StageID,
+			DeadlineNextStage: firstStage.Deadline,
+		}
+		nextStageName = firstStage.StageName
+		currentStageName = ""
+	} else if err != nil {
+		return nil, err
+	} else {
+		data = model.ResStage{
+			IDCurrentStage: currentStage.StageID,
+		}
+		stage, err := t.SubmissionRepository.GetStage(tx, currentStage.StageID)
+		if err != nil {
+			return nil, err
+		}
+		currentStageName = stage.StageName
+
+		nextStage, err := t.SubmissionRepository.GetNextStage(currentStage.StageID, team.CompetitionID)
+		if err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, err
+			}
+			nextStageName = ""
+		} else {
+			data.NextStage = nextStage.StageOrder
+			data.IDNextStage = nextStage.StageID
+			data.DeadlineNextStage = nextStage.Deadline
+			nextStageName = nextStage.StageName
+		}
+	}
+
+	return &model.TeamDetailProgress{
+		TeamCompetition: competition.CompetitionName,
 		PaymentStatus:  team.TeamStatus,
 		CurrentStageID: currentStage.StageID,
 		CurrentStage:   currentStageName,

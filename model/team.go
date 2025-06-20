@@ -74,15 +74,17 @@ type StageNow struct {
 }
 
 type TeamDetailProgress struct {
-	PaymentStatus  string   `json:"payment_status"`
-	CurrentStageID int      `json:"current_stageID"`
-	CurrentStage   string   `json:"current_stage"`
-	NextStage      string   `json:"next_stage"`
-	Stages         []Stages `json:"stages"`
+	TeamCompetition string   `json:"competition"`
+	PaymentStatus   string   `json:"payment_status"`
+	CurrentStageID  int      `json:"current_stageID"`
+	CurrentStage    string   `json:"current_stage"`
+	NextStage       string   `json:"next_stage"`
+	Stages          []Stages `json:"stages"`
 }
 
 type Stages struct {
 	Stage      string    `json:"stage_name"`
 	Deadline   time.Time `json:"stage_deadline"`
 	GdriveLink string    `json:"link_submission"`
+	Status     string    `json:"status_submission"`
 }
