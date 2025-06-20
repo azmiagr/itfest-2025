@@ -6,6 +6,7 @@ import (
 	"itfest-2025/internal/repository"
 	"itfest-2025/model"
 	"itfest-2025/pkg/database/mariadb"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -371,50 +372,108 @@ func (t *TeamService) GetDetailTeam(teamID uuid.UUID) (*model.TeamDetailProgress
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		firstStage, err := t.SubmissionRepository.GetFirstStage(team.CompetitionID)
 		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return &model.TeamDetailProgress{
-					TeamCompetition: competition.CompetitionName,
-					PaymentStatus:   team.TeamStatus,
-					CurrentStageID:  0,
-					CurrentStage:    "",
-					NextStage:       "",
-					Stages:          stages,
-				}, nil
-			}
 			return nil, err
 		}
 
-		data = model.ResStage{
-			IDCurrentStage:    0,
-			NextStage:         firstStage.StageOrder,
-			IDNextStage:       firstStage.StageID,
-			DeadlineNextStage: firstStage.Deadline,
+		// Jika payment sudah disetujui (terverifikasi), maka stage saat ini dianggap proposal
+		if team.TeamStatus == "terverifikasi" {
+			data = model.ResStage{
+				IDCurrentStage:    firstStage.StageID,
+				NextStage:         0, // default kosong, akan diisi jika ada stage selanjutnya
+				IDNextStage:       0,
+				DeadlineNextStage: time.Time{},
+			}
+
+			// Ambil next stage setelah proposal jika ada
+			nextStage, err := t.SubmissionRepository.GetNextStage(firstStage.StageID, team.CompetitionID)
+			if err == nil {
+				data.NextStage = nextStage.StageOrder
+				data.IDNextStage = nextStage.StageID
+				data.DeadlineNextStage = nextStage.Deadline
+				nextStageName = nextStage.StageName
+			}
+
+			return &model.TeamDetailProgress{
+				TeamCompetition: competition.CompetitionName,
+				PaymentStatus:   team.TeamStatus,
+				CurrentStageID:  firstStage.StageID,
+				CurrentStage:    firstStage.StageName,
+				NextStage:       nextStageName,
+				Stages:          stages,
+			}, nil
 		}
-		nextStageName = firstStage.StageName
-		currentStageName = ""
-	} else if err != nil {
-		return nil, err
+
+		// Kalau belum terverifikasi dan tidak ada stage
+		return &model.TeamDetailProgress{
+			TeamCompetition: competition.CompetitionName,
+			PaymentStatus:   team.TeamStatus,
+			CurrentStageID:  0,
+			CurrentStage:    "",
+			NextStage:       "",
+			Stages:          stages,
+		}, nil
 	} else {
 		data = model.ResStage{
 			IDCurrentStage: currentStage.StageID,
 		}
-		stage, err := t.SubmissionRepository.GetStage(tx, currentStage.StageID)
-		if err != nil {
+
+		// Cek apakah sudah submit untuk currentStage
+		submission, err := t.SubmissionRepository.GetSubmission(&model.ReqFilterSubmission{
+			StageID: currentStage.StageID,
+			TeamID:  team.TeamID.String(),
+		})
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, err
 		}
-		currentStageName = stage.StageName
 
-		nextStage, err := t.SubmissionRepository.GetNextStage(currentStage.StageID, team.CompetitionID)
-		if err != nil {
-			if !errors.Is(err, gorm.ErrRecordNotFound) {
+		// Jika sudah submit dan statusnya "lolos", geser ke stage berikutnya
+		if len(submission) > 0 && submission[0].Status == "lolos" {
+			// Ambil next stage dari current
+			nextStage, err := t.SubmissionRepository.GetNextStage(currentStage.StageID, team.CompetitionID)
+			if err != nil {
+				if !errors.Is(err, gorm.ErrRecordNotFound) {
+					return nil, err
+				}
+				stage, err := t.SubmissionRepository.GetStage(tx, currentStage.StageID)
+				if err != nil {
+					return nil, err
+				}
+				// Tidak ada next stage, berarti final
+				currentStageName = stage.StageName
+				nextStageName = ""
+			} else {
+				// Geser currentStage ke nextStage
+				currentStageName = nextStage.StageName
+				data.IDCurrentStage = nextStage.StageID
+
+				// Coba ambil stage setelah nextStage
+				stageAfterNext, err := t.SubmissionRepository.GetNextStage(nextStage.StageID, team.CompetitionID)
+				if err == nil {
+					data.NextStage = stageAfterNext.StageOrder
+					data.IDNextStage = stageAfterNext.StageID
+					data.DeadlineNextStage = stageAfterNext.Deadline
+					nextStageName = stageAfterNext.StageName
+				} else {
+					nextStageName = ""
+				}
+			}
+		} else {
+			// Belum submit atau belum lolos, current tetap di sini
+			stage, err := t.SubmissionRepository.GetStage(tx, currentStage.StageID)
+			if err != nil {
 				return nil, err
 			}
-			nextStageName = ""
-		} else {
-			data.NextStage = nextStage.StageOrder
-			data.IDNextStage = nextStage.StageID
-			data.DeadlineNextStage = nextStage.Deadline
-			nextStageName = nextStage.StageName
+			currentStageName = stage.StageName
+
+			nextStage, err := t.SubmissionRepository.GetNextStage(currentStage.StageID, team.CompetitionID)
+			if err == nil {
+				data.NextStage = nextStage.StageOrder
+				data.IDNextStage = nextStage.StageID
+				data.DeadlineNextStage = nextStage.Deadline
+				nextStageName = nextStage.StageName
+			} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, err
+			}
 		}
 	}
 
@@ -463,50 +522,108 @@ func (t *TeamService) GetProgressByUserID(userID uuid.UUID) (*model.TeamDetailPr
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		firstStage, err := t.SubmissionRepository.GetFirstStage(team.CompetitionID)
 		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return &model.TeamDetailProgress{
-					TeamCompetition: competition.CompetitionName,
-					PaymentStatus:   team.TeamStatus,
-					CurrentStageID:  0,
-					CurrentStage:    "",
-					NextStage:       "",
-					Stages:          stages,
-				}, nil
-			}
 			return nil, err
 		}
 
-		data = model.ResStage{
-			IDCurrentStage:    0,
-			NextStage:         firstStage.StageOrder,
-			IDNextStage:       firstStage.StageID,
-			DeadlineNextStage: firstStage.Deadline,
+		// Jika payment sudah disetujui (terverifikasi), maka stage saat ini dianggap proposal
+		if team.TeamStatus == "terverifikasi" {
+			data = model.ResStage{
+				IDCurrentStage:    firstStage.StageID,
+				NextStage:         0, // default kosong, akan diisi jika ada stage selanjutnya
+				IDNextStage:       0,
+				DeadlineNextStage: time.Time{},
+			}
+
+			// Ambil next stage setelah proposal jika ada
+			nextStage, err := t.SubmissionRepository.GetNextStage(firstStage.StageID, team.CompetitionID)
+			if err == nil {
+				data.NextStage = nextStage.StageOrder
+				data.IDNextStage = nextStage.StageID
+				data.DeadlineNextStage = nextStage.Deadline
+				nextStageName = nextStage.StageName
+			}
+
+			return &model.TeamDetailProgress{
+				TeamCompetition: competition.CompetitionName,
+				PaymentStatus:   team.TeamStatus,
+				CurrentStageID:  firstStage.StageID,
+				CurrentStage:    firstStage.StageName,
+				NextStage:       nextStageName,
+				Stages:          stages,
+			}, nil
 		}
-		nextStageName = firstStage.StageName
-		currentStageName = ""
-	} else if err != nil {
-		return nil, err
+
+		// Kalau belum terverifikasi dan tidak ada stage
+		return &model.TeamDetailProgress{
+			TeamCompetition: competition.CompetitionName,
+			PaymentStatus:   team.TeamStatus,
+			CurrentStageID:  0,
+			CurrentStage:    "",
+			NextStage:       "",
+			Stages:          stages,
+		}, nil
 	} else {
 		data = model.ResStage{
 			IDCurrentStage: currentStage.StageID,
 		}
-		stage, err := t.SubmissionRepository.GetStage(tx, currentStage.StageID)
-		if err != nil {
+
+		// Cek apakah sudah submit untuk currentStage
+		submission, err := t.SubmissionRepository.GetSubmission(&model.ReqFilterSubmission{
+			StageID: currentStage.StageID,
+			TeamID:  team.TeamID.String(),
+		})
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, err
 		}
-		currentStageName = stage.StageName
 
-		nextStage, err := t.SubmissionRepository.GetNextStage(currentStage.StageID, team.CompetitionID)
-		if err != nil {
-			if !errors.Is(err, gorm.ErrRecordNotFound) {
+		// Jika sudah submit dan statusnya "lolos", geser ke stage berikutnya
+		if len(submission) > 0 && submission[0].Status == "lolos" {
+			// Ambil next stage dari current
+			nextStage, err := t.SubmissionRepository.GetNextStage(currentStage.StageID, team.CompetitionID)
+			if err != nil {
+				if !errors.Is(err, gorm.ErrRecordNotFound) {
+					return nil, err
+				}
+				stage, err := t.SubmissionRepository.GetStage(tx, currentStage.StageID)
+				if err != nil {
+					return nil, err
+				}
+				// Tidak ada next stage, berarti final
+				currentStageName = stage.StageName
+				nextStageName = ""
+			} else {
+				// Geser currentStage ke nextStage
+				currentStageName = nextStage.StageName
+				data.IDCurrentStage = nextStage.StageID
+
+				// Coba ambil stage setelah nextStage
+				stageAfterNext, err := t.SubmissionRepository.GetNextStage(nextStage.StageID, team.CompetitionID)
+				if err == nil {
+					data.NextStage = stageAfterNext.StageOrder
+					data.IDNextStage = stageAfterNext.StageID
+					data.DeadlineNextStage = stageAfterNext.Deadline
+					nextStageName = stageAfterNext.StageName
+				} else {
+					nextStageName = ""
+				}
+			}
+		} else {
+			// Belum submit atau belum lolos, current tetap di sini
+			stage, err := t.SubmissionRepository.GetStage(tx, currentStage.StageID)
+			if err != nil {
 				return nil, err
 			}
-			nextStageName = ""
-		} else {
-			data.NextStage = nextStage.StageOrder
-			data.IDNextStage = nextStage.StageID
-			data.DeadlineNextStage = nextStage.Deadline
-			nextStageName = nextStage.StageName
+			currentStageName = stage.StageName
+
+			nextStage, err := t.SubmissionRepository.GetNextStage(currentStage.StageID, team.CompetitionID)
+			if err == nil {
+				data.NextStage = nextStage.StageOrder
+				data.IDNextStage = nextStage.StageID
+				data.DeadlineNextStage = nextStage.Deadline
+				nextStageName = nextStage.StageName
+			} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, err
+			}
 		}
 	}
 

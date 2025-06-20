@@ -113,15 +113,21 @@ func (s *SubmissionService) CreateSubmission(userID uuid.UUID, param *model.ReqS
 		TeamID: team.TeamID.String(),
 	})
 
-	if submission[0].Status == "tidak lolos" {
-		return model.ErrNotPassedPrevious
+	if len(submission) > 0 {
+		if submission[0].Status == "tidak lolos" {
+			return model.ErrNotPassedPrevious
+		}
+		if submission[0].Status == "diproses" {
+			return model.ErrSubmissionProcessing
+		}
 	}
-	if submission[0].Status == "diproses" {
-		return model.ErrSubmissionProcessing
-	}
+
+	// Deadline check
 	if time.Now().After(stage.DeadlineNextStage) {
 		return model.ErrPassedDeadline
 	}
+
+	// Verifikasi status
 	if team.TeamStatus == "belum terverifikasi" {
 		return model.ErrUnverifiedAccount
 	}
