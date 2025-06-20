@@ -45,6 +45,7 @@ type UpdateProfile struct {
 	StudentNumber string `json:"student_number"`
 	University    string `json:"university"`
 	Major         string `json:"major"`
+	PhoneNumber   string `json:"phone_number"`
 }
 
 type UserParam struct {
