@@ -252,6 +252,18 @@ func (t *TeamService) GetTeamByID(teamID uuid.UUID) (*model.TeamInfoResponseAdmi
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		firstStage, err := t.SubmissionRepository.GetFirstStage(team.CompetitionID)
 		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return &model.TeamInfoResponseAdmin{
+					TeamName:            team.TeamName,
+					CompetitionCategory: competitionName,
+					LeaderName:          user.FullName,
+					StudentNumber:       user.StudentNumber,
+					PaymentStatus:       team.TeamStatus,
+					PaymentTransc:       user.PaymentTransc,
+					Members:             memberResponse,
+					StageNow:            model.StageNow{},
+				}, nil
+			}
 			return nil, err
 		}
 
@@ -290,7 +302,7 @@ func (t *TeamService) GetTeamByID(teamID uuid.UUID) (*model.TeamInfoResponseAdmi
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			submission = "diproses"
 		} else {
-			return nil, err 
+			return nil, err
 		}
 	} else if len(dataSubmission) == 0 {
 		submission = "diproses"
@@ -408,11 +420,11 @@ func (t *TeamService) GetDetailTeam(teamID uuid.UUID) (*model.TeamDetailProgress
 
 	return &model.TeamDetailProgress{
 		TeamCompetition: competition.CompetitionName,
-		PaymentStatus:  team.TeamStatus,
-		CurrentStageID: currentStage.StageID,
-		CurrentStage:   currentStageName,
-		NextStage:      nextStageName,
-		Stages:         stages,
+		PaymentStatus:   team.TeamStatus,
+		CurrentStageID:  currentStage.StageID,
+		CurrentStage:    currentStageName,
+		NextStage:       nextStageName,
+		Stages:          stages,
 	}, nil
 }
 
@@ -500,10 +512,10 @@ func (t *TeamService) GetProgressByUserID(userID uuid.UUID) (*model.TeamDetailPr
 
 	return &model.TeamDetailProgress{
 		TeamCompetition: competition.CompetitionName,
-		PaymentStatus:  team.TeamStatus,
-		CurrentStageID: currentStage.StageID,
-		CurrentStage:   currentStageName,
-		NextStage:      nextStageName,
-		Stages:         stages,
+		PaymentStatus:   team.TeamStatus,
+		CurrentStageID:  currentStage.StageID,
+		CurrentStage:    currentStageName,
+		NextStage:       nextStageName,
+		Stages:          stages,
 	}, nil
 }
