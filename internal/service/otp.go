@@ -144,7 +144,7 @@ func (o *OtpService) ResendOtp(param model.GetOtp) error {
 
 							<tr>
 								<td align="center" style="padding: 0 20px 40px 20px; font-family: Arial, sans-serif; font-size: 12px; line-height: 1.5; color: #a0a0a0 !important;">
-									Keluarga Besar Mahasiswa Sistem Informasi<br>
+									Keluarga Besar Mahasiswa Departemen Sistem Informasi<br>
 									Universitas Brawijaya
 								</td>
 							</tr>

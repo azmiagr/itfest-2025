@@ -44,8 +44,9 @@ func (a *AnnouncementService) GetAnnouncement() ([]*model.ResponseAnnouncement, 
 	for _, v := range data {
 		response = append(response, &model.ResponseAnnouncement{
 			AnnouncementID: v.AnnouncementID.String(),
-			Message: v.Description,
-		}) 
+			Message:        v.Description,
+			Date:           v.CreatedAt,
+		})
 	}
 
 	return response, nil
@@ -65,10 +66,10 @@ func (a *AnnouncementService) SendAnnouncement(req model.RequestAnnouncement) er
 
 	err = a.AnnouncementRepository.CreateAnnouncement(tx, entity.Announcement{
 		AnnouncementID: uuid.New(),
-		Title: "Announcement",
-		Description: req.Message,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		Title:          "Announcement",
+		Description:    req.Message,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
 	})
 	if err != nil {
 		return err
@@ -196,7 +197,7 @@ func (a *AnnouncementService) SendAnnouncement(req model.RequestAnnouncement) er
 
 								<tr>
 									<td align="center" style="padding: 0 20px 40px 20px; font-family: Arial, sans-serif; font-size: 12px; line-height: 1.5; color: #a0a0a0;" class="footer-text">
-										Keluarga Besar Mahasiswa Sistem Informasi
+										Keluarga Besar Mahasiswa Departemen Sistem Informasi
 										<br>
 										Universitas Brawijaya
 									</td>
