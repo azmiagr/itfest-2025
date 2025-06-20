@@ -68,8 +68,12 @@ func (r *Rest) UploadPayment(c *gin.Context) {
 
 	publicURL, err := r.service.UserService.UploadPayment(user.UserID, paymentFile)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, "failed to upload payment", err)
-		return
+		if err.Error() == "file size exceeds maximum limit of 1MB" {
+			response.Error(c, http.StatusBadRequest, "please reduce the file size", err)
+		} else {
+			response.Error(c, http.StatusInternalServerError, "failed to upload payment", err)
+			return
+		}
 	}
 
 	response.Success(c, http.StatusOK, "success to upload payment", publicURL)
@@ -87,8 +91,12 @@ func (r *Rest) UploadKTM(c *gin.Context) {
 
 	err = r.service.UserService.UploadKTM(user.UserID, ktmFile)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, "failed to upload ktm", err)
-		return
+		if err.Error() == "file size exceeds maximum limit of 1MB" {
+			response.Error(c, http.StatusBadRequest, "please reduce the file size", err)
+		} else {
+			response.Error(c, http.StatusInternalServerError, "failed to upload payment", err)
+			return
+		}
 	}
 
 	response.Success(c, http.StatusOK, "success to upload ktm", nil)

@@ -287,6 +287,11 @@ func (u *UserService) Login(param model.UserLogin) (model.LoginResponse, error) 
 }
 
 func (u *UserService) UploadPayment(userID uuid.UUID, file *multipart.FileHeader) (string, error) {
+	maxSize := int64(1024 * 1024)
+	if file.Size > maxSize {
+		return "", errors.New("file size exceeds maximum limit of 1MB")
+	}
+
 	tx := u.db.Begin()
 	defer tx.Rollback()
 
@@ -318,6 +323,11 @@ func (u *UserService) UploadPayment(userID uuid.UUID, file *multipart.FileHeader
 }
 
 func (u *UserService) UploadKTM(userID uuid.UUID, file *multipart.FileHeader) error {
+	maxSize := int64(1024 * 1024)
+	if file.Size > maxSize {
+		return errors.New("file size exceeds maximum limit of 1MB")
+	}
+
 	tx := u.db.Begin()
 	defer tx.Rollback()
 
