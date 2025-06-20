@@ -76,6 +76,24 @@ func (r *Rest) UploadPayment(c *gin.Context) {
 
 }
 
+func (r *Rest) UploadKTM(c *gin.Context) {
+	user := c.MustGet("user").(*entity.User)
+
+	ktmFile, err := c.FormFile("ktm")
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "ktm is required", err)
+		return
+	}
+
+	err = r.service.UserService.UploadKTM(user.UserID, ktmFile)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to upload ktm", err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "success to upload ktm", nil)
+}
+
 func (r *Rest) VerifyUser(c *gin.Context) {
 	var param model.VerifyUser
 	err := c.ShouldBindJSON(&param)
