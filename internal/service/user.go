@@ -24,6 +24,7 @@ type IUserService interface {
 	Register(param *model.UserRegister) (model.RegisterResponse, error)
 	Login(param model.UserLogin) (model.LoginResponse, error)
 	UploadPayment(userID uuid.UUID, file *multipart.FileHeader) (string, error)
+	UploadKTM(userID uuid.UUID, file *multipart.FileHeader) error
 	VerifyUser(param model.VerifyUser) error
 	UpdateProfile(userID uuid.UUID, param model.UpdateProfile) (*model.UpdateProfile, error)
 	GetUserProfile(userID uuid.UUID) (model.UserProfile, error)
@@ -316,6 +317,38 @@ func (u *UserService) UploadPayment(userID uuid.UUID, file *multipart.FileHeader
 	return paymentURL, nil
 }
 
+func (u *UserService) UploadKTM(userID uuid.UUID, file *multipart.FileHeader) error {
+	tx := u.db.Begin()
+	defer tx.Rollback()
+
+	user, err := u.UserRepository.GetUser(model.UserParam{
+		UserID: userID,
+	})
+	if err != nil {
+		return err
+	}
+
+	ktmURL, err := u.Supabase.UploadFile(file)
+	if err != nil {
+		return err
+	}
+
+	user.StudentCardLink = ktmURL
+
+	err = u.UserRepository.UpdateUser(tx, user)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit().Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
 func (u *UserService) VerifyUser(param model.VerifyUser) error {
 	tx := u.db.Begin()
 	defer tx.Rollback()
@@ -383,6 +416,7 @@ func (u *UserService) UpdateProfile(userID uuid.UUID, param model.UpdateProfile)
 	user.StudentNumber = param.StudentNumber
 	user.University = param.University
 	user.Major = param.Major
+	user.PhoneNumber = param.PhoneNumber
 
 	err = u.UserRepository.UpdateUser(tx, user)
 	if err != nil {
@@ -394,6 +428,7 @@ func (u *UserService) UpdateProfile(userID uuid.UUID, param model.UpdateProfile)
 		StudentNumber: user.StudentNumber,
 		University:    user.University,
 		Major:         user.Major,
+		PhoneNumber:   user.PhoneNumber,
 	}
 
 	err = tx.Commit().Error
@@ -500,7 +535,7 @@ func (u *UserService) ChangePassword(email string) (string, error) {
 		return "", err
 	}
 
-	err = mail.SendEmail(user.Email,  "OTP Atur Ulang Kata Sandi", fmt.Sprintf(`
+	err = mail.SendEmail(user.Email, "OTP Atur Ulang Kata Sandi", fmt.Sprintf(`
 		<!DOCTYPE html>
 		<html lang="id">
 		<head>
@@ -596,7 +631,7 @@ func (u *UserService) ChangePassword(email string) (string, error) {
 			</table>
 		</body>
 		</html>
-	`, otp) )
+	`, otp))
 	if err != nil {
 		return "", err
 	}
