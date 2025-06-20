@@ -177,6 +177,9 @@ func (t *TeamService) GetAllTeam() ([]*model.GetAllTeamsResponse, error) {
 		if err != nil {
 			continue
 		}
+		if v.RoleID == 1 {
+			continue
+		}
 
 		var teamMembers []model.GetTeamMembers
 		for _, x := range v.Team.TeamMembers {
