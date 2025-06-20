@@ -61,6 +61,7 @@ func (r *Rest) MountEndpoint() {
 
 	competition := routerGroup.Group("/competitions")
 	competition.Use(r.middleware.AuthenticateUser)
+	competition.POST("/upload-ktm", r.UploadKTM)
 	competition.POST("/register/:competition_id", r.CompetitionRegistration)
 
 	admin := routerGroup.Group("/admin")
