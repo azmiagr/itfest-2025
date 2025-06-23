@@ -436,11 +436,11 @@ func (t *TeamService) getProgress(ID uuid.UUID, isAdmin bool) (*model.TeamDetail
 
 	// Jika belum terverifikasi, maka current stage = pembayaran
 	if team.TeamStatus != "terverifikasi" {
-		currentStageName := "Pembayaran"
+		currentStageName := "payment"
 		currentStageID := 0
 		nextStageName := ""
 		for i := 0; i < len(stages); i++ {
-			if strings.ToLower(stages[i].Stage) == "pembayaran" && i+1 < len(stages) {
+			if strings.ToLower(stages[i].Stage) == "payment" && i+1 < len(stages) {
 				nextStageName = stages[i+1].Stage
 				break
 			}
