@@ -46,6 +46,7 @@ func (r *Rest) MountEndpoint() {
 	user.GET("/my-team-info", r.GetTeamInfo)
 	user.GET("/my-team-profile", r.GetMyTeamProfile)
 	user.GET("/progress", r.GetProgressByUserID)
+	user.GET("/announcement", r.GetAnnouncement)
 	user.POST("/upload-payment", r.UploadPayment)
 	user.POST("/change-password", r.ChangePassword)
 	user.POST("/verify-token", r.VerifyOtpChangePassword)
