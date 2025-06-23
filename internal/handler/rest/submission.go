@@ -57,6 +57,9 @@ func (r *Rest) CreateSubmission(c *gin.Context) {
 		} else if errors.Is(err, model.ErrNotPassedPrevious) {
 			response.Error(c, http.StatusUnprocessableEntity, "submission failed", err)
 			return
+		} else if errors.Is(err, model.ErrNoStage) {
+			response.Error(c, http.StatusForbidden, "Stage tidak tersedia atau sudah selesai", err)
+			return
 		} else if errors.Is(err, model.ErrSubmissionProcessing) {
 			response.Error(c, http.StatusConflict, "submission sedang diproses", err)
 			return
