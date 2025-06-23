@@ -65,7 +65,7 @@ func (u *UserRepository) GetAllUser() ([]*entity.User, error) {
 
 func (u *UserRepository) GetCountPayment() (int64, error) {
 	var count int64
-	err := u.db.Debug().Model(&entity.User{}).Where("payment_transc IS NOT NULL").Count(&count).Error
+	err := u.db.Debug().Model(&entity.User{}).Where("registration_link IS NOT NULL AND registration_link != ''").Count(&count).Error
 	if err != nil {
 		return 0, err
 	}
