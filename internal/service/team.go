@@ -391,7 +391,7 @@ func (t *TeamService) getProgress(ID uuid.UUID, isAdmin bool) (*model.TeamDetail
 
 	// dummy pembayaran untuk stage
 	paymentStage := model.Stages{
-		Stage:      "Pembayaran",
+		Stage:      "Payment",
 		GdriveLink: user.PaymentTransc,
 		Status:     team.TeamStatus,
 		Deadline:   time.Time{},
