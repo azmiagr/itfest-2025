@@ -38,6 +38,7 @@ type CompetitionRegistrationRequest struct {
 	StudentNumber string `json:"student_number" binding:"required"`
 	University    string `json:"university" binding:"required"`
 	Major         string `json:"major" binding:"required"`
+	PhoneNumber   string `json:"phone_number" binding:"required"`
 }
 
 type UpdateProfile struct {
