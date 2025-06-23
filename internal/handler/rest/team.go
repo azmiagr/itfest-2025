@@ -77,11 +77,6 @@ func (r *Rest) UpdateTeamStatus(c *gin.Context) {
 		return
 	}
 
-	if req.PaymentStatus != "belum terverifikasi" && req.PaymentStatus != "terverifikasi" {
-		response.Error(c, http.StatusBadRequest, "invalid payment status", nil)
-		return
-	}
-
 	err = r.service.TeamService.UpdateTeamStatus(teamID, req)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "failed to update team status", err)
