@@ -753,6 +753,7 @@ func (u *UserService) CompetitionRegistration(userID uuid.UUID, competitionID in
 	user.StudentNumber = param.StudentNumber
 	user.University = param.University
 	user.Major = param.Major
+	user.PhoneNumber = param.PhoneNumber
 
 	err = u.UserRepository.UpdateUser(tx, user)
 	if err != nil {
