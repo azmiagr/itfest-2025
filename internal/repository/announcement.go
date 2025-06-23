@@ -32,7 +32,7 @@ func (r *AnnouncementRepository) CreateAnnouncement(tx *gorm.DB, req entity.Anno
 
 func (r *AnnouncementRepository) GetAnnouncement() ([]*entity.Announcement, error) {
 	var announcement []*entity.Announcement
-	err := r.db.Debug().Find(&announcement).Error
+	err := r.db.Debug().Find(&announcement).Order("created_at desc").Error
 	if err != nil {
 		return nil, err
 	}
