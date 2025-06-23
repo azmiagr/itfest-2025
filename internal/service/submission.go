@@ -122,16 +122,42 @@ func (s *SubmissionService) CreateSubmission(userID uuid.UUID, param *model.ReqS
 		}
 	}
 
-	// Deadline check
 	if time.Now().After(stage.DeadlineNextStage) {
 		return model.ErrPassedDeadline
 	}
 
-	// Verifikasi status
-	if team.TeamStatus == "belum terverifikasi" {
+	if team.TeamStatus == "ditolak" {
 		return model.ErrUnverifiedAccount
 	}
 
+	dataStage, err := s.SubmissionRepository.GetStage(tx, stage.IDCurrentStage + 1)
+	if err != nil {
+		return err
+	}
+
+	if team.CompetitionID == 2 {
+		if team.TeamStatus != "terverifikasi" {
+			return model.ErrUnverifiedAccount
+		}
+	}
+	
+	if team.CompetitionID == 3 {
+		if dataStage.StageOrder == 1 {
+			if team.TeamStatus == "terverifikasi" {
+				return model.ErrUnverifiedAccount
+			}
+		} else {
+			if team.TeamStatus != "terverifikasi" {
+				return model.ErrUnverifiedAccount
+			}
+		}
+	}
+
+	if team.CompetitionID != 2 && team.CompetitionID != 3 {
+		if team.TeamStatus != "terverifikasi" || dataStage.StageOrder != 1 {
+			return model.ErrUnverifiedAccount
+		}
+	}
 
 	newSubmission := &entity.TeamProgress{
 		StageID:    stage.IDNextStage,

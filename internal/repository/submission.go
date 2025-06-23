@@ -105,7 +105,7 @@ func (t *SubmissionRepository) GetSubmissionAllStage(tx *gorm.DB, teamID uuid.UU
 
 	err := tx.
 		Table("stages").
-		Select("stages.stage_name AS stage, stages.deadline AS deadline, team_progresses.gdrive_link AS gdrive_link, team_progresses.status as status").
+		Select("stages.stage_id AS stage_id, stages.stage_name AS stage, stages.deadline AS deadline, team_progresses.gdrive_link AS gdrive_link, team_progresses.status as status").
 		Joins("LEFT JOIN team_progresses ON team_progresses.stage_id = stages.stage_id AND team_progresses.team_id = ?", teamID).
 		Where("stages.competition_id = ?", competitionID).
 		Order("stages.stage_order ASC").

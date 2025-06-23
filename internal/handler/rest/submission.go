@@ -52,7 +52,7 @@ func (r *Rest) CreateSubmission(c *gin.Context) {
 	err = r.service.SubmissionService.CreateSubmission(user.UserID, &param)
 	if err != nil {
 		if errors.Is(err, model.ErrUnverifiedAccount) {
-			response.Error(c, http.StatusForbidden, "cannot add another team member", err)
+			response.Error(c, http.StatusForbidden, "Status team ditolak atau belum diverifikasi", err)
 			return
 		} else if errors.Is(err, model.ErrNotPassedPrevious) {
 			response.Error(c, http.StatusUnprocessableEntity, "submission failed", err)

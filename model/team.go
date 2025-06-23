@@ -83,6 +83,7 @@ type TeamDetailProgress struct {
 }
 
 type Stages struct {
+	StageID    int       `json:"stage_id"`
 	Stage      string    `json:"stage_name"`
 	Deadline   time.Time `json:"stage_deadline"`
 	GdriveLink string    `json:"link_submission"`
