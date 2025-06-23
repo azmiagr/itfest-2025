@@ -8,12 +8,12 @@ import (
 )
 
 var (
-	ErrUnverifiedAccount      = errors.New("submission ditolak karena belum terverifikasi atau ditolak")
-	ErrNotPassedPrevious      = errors.New("submission ditolak karena stage sebelumnya tidak lolos")
-	ErrSubmissionProcessing   = errors.New("submission sedang diproses")
-	ErrPassedDeadline         = errors.New("submission ditolak karena sudah melewati deadline")
+	ErrUnverifiedAccount    = errors.New("submission ditolak karena belum terverifikasi atau ditolak")
+	ErrNotPassedPrevious    = errors.New("submission ditolak karena stage sebelumnya tidak lolos")
+	ErrSubmissionProcessing = errors.New("submission sedang diproses")
+	ErrPassedDeadline       = errors.New("submission ditolak karena sudah melewati deadline")
+	ErrNoStage              = errors.New("submission ditolak karena stage tidak tersedia")
 )
-
 
 type ReqSubmission struct {
 	GdriveLink string `json:"gdrive_link" binding:"required,url"`

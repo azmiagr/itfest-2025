@@ -102,6 +102,9 @@ func (s *SubmissionService) CreateSubmission(userID uuid.UUID, param *model.ReqS
 		tx.Rollback()
 		return err
 	}
+	if stage.IDNextStage == 0 {
+		return model.ErrNoStage
+	}
 
 	team, err := s.TeamRepository.GetTeamByUserID(tx, userID)
 	if err != nil {
@@ -130,7 +133,7 @@ func (s *SubmissionService) CreateSubmission(userID uuid.UUID, param *model.ReqS
 		return model.ErrUnverifiedAccount
 	}
 
-	dataStage, err := s.SubmissionRepository.GetStage(tx, stage.IDCurrentStage + 1)
+	dataStage, err := s.SubmissionRepository.GetStage(tx, stage.IDNextStage)
 	if err != nil {
 		return err
 	}
