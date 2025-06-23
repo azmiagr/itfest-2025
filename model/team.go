@@ -53,7 +53,7 @@ type GetTeamMembers struct {
 
 type ReqUpdateStatusTeam struct {
 	TeamID        string `json:"team_id"`
-	PaymentStatus string `json:"payment_status" binding:"oneof='belum terverifikasi' 'terverifikasi'"`
+	PaymentStatus string `json:"payment_status" binding:"oneof='belum terverifikasi' 'terverifikasi' 'ditolak'"`
 }
 
 type TeamInfoResponseAdmin struct {
@@ -83,6 +83,7 @@ type TeamDetailProgress struct {
 }
 
 type Stages struct {
+	StageID    int       `json:"stage_id"`
 	Stage      string    `json:"stage_name"`
 	Deadline   time.Time `json:"stage_deadline"`
 	GdriveLink string    `json:"link_submission"`
