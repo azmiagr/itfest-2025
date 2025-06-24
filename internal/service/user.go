@@ -23,7 +23,7 @@ import (
 type IUserService interface {
 	Register(param *model.UserRegister) (model.RegisterResponse, error)
 	Login(param model.UserLogin) (model.LoginResponse, error)
-	UploadPayment(userID uuid.UUID, file *multipart.FileHeader) (string, error)
+	UploadPayment(userID uuid.UUID, file *multipart.FileHeader) (*model.UploadPaymentResponse, error)
 	UploadKTM(userID uuid.UUID, file *multipart.FileHeader) error
 	VerifyUser(param model.VerifyUser) error
 	UpdateProfile(userID uuid.UUID, param model.UpdateProfile) (*model.UpdateProfile, error)
@@ -286,10 +286,10 @@ func (u *UserService) Login(param model.UserLogin) (model.LoginResponse, error) 
 	return result, nil
 }
 
-func (u *UserService) UploadPayment(userID uuid.UUID, file *multipart.FileHeader) (string, error) {
+func (u *UserService) UploadPayment(userID uuid.UUID, file *multipart.FileHeader) (*model.UploadPaymentResponse, error) {
 	maxSize := int64(1024 * 1024)
 	if file.Size > maxSize {
-		return "", errors.New("file size exceeds maximum limit of 1MB")
+		return nil, errors.New("file size exceeds maximum limit of 1MB")
 	}
 
 	tx := u.db.Begin()
@@ -299,27 +299,43 @@ func (u *UserService) UploadPayment(userID uuid.UUID, file *multipart.FileHeader
 		UserID: userID,
 	})
 	if err != nil {
-		return "", errors.New("user not found")
+		return nil, errors.New("user not found")
+	}
+
+	team, err := u.TeamRepository.GetTeamByID(tx, user.Team.TeamID)
+	if err != nil {
+		return nil, err
 	}
 
 	paymentURL, err := u.Supabase.UploadFile(file)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	user.PaymentTransc = paymentURL
 
 	err = u.UserRepository.UpdateUser(tx, user)
 	if err != nil {
-		return "", err
+		return nil, err
+	}
+
+	team.TeamStatus = "diproses"
+
+	err = u.TeamRepository.UpdateTeam(tx, team)
+	if err != nil {
+		return nil, err
 	}
 
 	err = tx.Commit().Error
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return paymentURL, nil
+	res := &model.UploadPaymentResponse{
+		Status: team.TeamStatus,
+	}
+
+	return res, nil
 }
 
 func (u *UserService) UploadKTM(userID uuid.UUID, file *multipart.FileHeader) error {
