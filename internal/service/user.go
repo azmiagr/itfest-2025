@@ -586,7 +586,7 @@ func (u *UserService) ChangePassword(email string) (string, error) {
 
 							<tr>
 								<td align="center" style="padding-bottom: 20px;">
-									<img src="https://imgur.com/3fcE9Ll" width="300" alt="IT FEST 2025 Logo" style="display: block; width: 300px; max-width: 100%%; min-width: 100px; font-family: Arial, sans-serif; color: #ffffff;">
+									<img src="https://i.imgur.com/3fcE9Ll.png" width="300" alt="IT FEST 2025 Logo" style="display: block; width: 300px; max-width: 100%%; min-width: 100px; font-family: Arial, sans-serif; color: #ffffff;">
 								</td>
 							</tr>
 
