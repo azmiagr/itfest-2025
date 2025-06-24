@@ -103,3 +103,7 @@ type GetTotalParticipant struct {
 	TotalUIUX int `json:"total_uiux"`
 	TotalBP   int `json:"total_bp"`
 }
+
+type UploadPaymentResponse struct {
+	Status string `json:"status"`
+}
