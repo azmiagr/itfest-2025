@@ -162,13 +162,13 @@ func (a *AnnouncementService) SendAnnouncement(req model.RequestAnnouncement) er
 
 								<tr>
 									<td align="center" style="padding-bottom: 20px;">
-										<img src="https://i.postimg.cc/9QHJbbGw/it-fest-2025.png" width="300" alt="IT FEST 2025 Logo" style="display: block; width: 300px; max-width: 100%; min-width: 100px; font-family: Arial, sans-serif; color: #ffffff;" class="full-width-image">
+										<img src="https://i.imgur.com/3fcE9Ll.png" width="300" alt="IT FEST 2025 Logo" style="display: block; width: 300px; max-width: 100%; min-width: 100px; font-family: Arial, sans-serif; color: #ffffff;" class="full-width-image">
 									</td>
 								</tr>
 
 								<tr>
 									<td align="center" style="padding: 20px 0;">
-										<img src="https://i.postimg.cc/m2gbD3cM/email-ITFEST.png" width="130" alt="Ikon Pengumuman" style="display: block; width: 130px;">
+										<img src="https://i.imgur.com/2pvNmnv.png" width="130" alt="Ikon Pengumuman" style="display: block; width: 130px;">
 									</td>
 								</tr>
 
