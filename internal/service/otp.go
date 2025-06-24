@@ -100,13 +100,13 @@ func (o *OtpService) ResendOtp(param model.GetOtp) error {
 
 							<tr>
 								<td align="center" style="padding-bottom: 20px;">
-									<img src="https://i.postimg.cc/9QHJbbGw/it-fest-2025.png" width="300" alt="IT FEST 2025 Logo" style="display: block; width: 300px; max-width: 100%%; min-width: 100px; font-family: Arial, sans-serif; color: #ffffff;">
+									<img src="https://i.imgur.com/3fcE9Ll.png" width="300" alt="IT FEST 2025 Logo" style="display: block; width: 300px; max-width: 100%%; min-width: 100px; font-family: Arial, sans-serif; color: #ffffff;">
 								</td>
 							</tr>
 
 							<tr>
 								<td align="center" style="padding: 20px 0;">
-									<img src="https://i.postimg.cc/pdCm4W3M/kode.png" width="200" alt="Email Icon" style="display: block; width: 200px;">
+									<img src="https://i.imgur.com/dgvL3Gf.png" width="200" alt="Email Icon" style="display: block; width: 200px;">
 								</td>
 							</tr>
 
