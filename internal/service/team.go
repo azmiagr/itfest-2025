@@ -379,17 +379,16 @@ func (t *TeamService) getProgress(ID uuid.UUID, isAdmin bool) (*model.TeamDetail
 		return nil, err
 	}
 
-	var stages []model.Stages
-	dataSubmission, err := t.SubmissionRepository.GetSubmissionAllStage(tx, team.TeamID, team.CompetitionID)
+	competitionName := strings.ToLower(competition.CompetitionName)
+	isBP := strings.Contains(competitionName, "bp") || strings.Contains(competitionName, "business")
+	isUIUX := strings.Contains(competitionName, "ui") || strings.Contains(competitionName, "ux")
+
+	stages, err := t.SubmissionRepository.GetSubmissionAllStage(tx, team.TeamID, team.CompetitionID)
 	if err != nil {
-		return &model.TeamDetailProgress{}, err
-	}
-	
-	if len(dataSubmission) > 0 {
-		stages = dataSubmission
+		return nil, err
 	}
 
-	// dummy pembayaran untuk stage
+	// dummy payment stage
 	paymentStage := model.Stages{
 		Stage:      "Payment",
 		GdriveLink: user.PaymentTransc,
@@ -397,14 +396,7 @@ func (t *TeamService) getProgress(ID uuid.UUID, isAdmin bool) (*model.TeamDetail
 		Deadline:   time.Time{},
 	}
 
-	// memasukkan kedalam stages
-	competitionName := strings.ToLower(competition.CompetitionName)
-	if strings.Contains(competitionName, "ui") || strings.Contains(competitionName, "ux") {
-		if len(stages) >= 1 {
-			paymentStage.Deadline = stages[0].Deadline
-		}
-		stages = append([]model.Stages{paymentStage}, stages...)
-	} else if strings.Contains(competitionName, "bp") || strings.Contains(competitionName, "business") {
+	if isBP {
 		if len(stages) >= 2 {
 			paymentStage.Deadline = stages[1].Deadline
 		}
@@ -413,125 +405,48 @@ func (t *TeamService) getProgress(ID uuid.UUID, isAdmin bool) (*model.TeamDetail
 		} else {
 			stages = append(stages, paymentStage)
 		}
+	} else if isUIUX {
+		if len(stages) >= 1 {
+			paymentStage.Deadline = stages[0].Deadline
+		}
+		stages = append([]model.Stages{paymentStage}, stages...)
 	}
 
-	// Cek apakah ada stage yang sedang diproses atau tidak lolos
-	for i := range stages {
-		status := strings.ToLower(stages[i].Status)
-		if status == "diproses" || status == "tidak lolos" {
-			nextStageName := ""
-			if i+1 < len(stages) {
-				nextStageName = stages[i+1].Stage
-			}
-			return &model.TeamDetailProgress{
-				TeamCompetition: competition.CompetitionName,
-				PaymentStatus:   team.TeamStatus,
-				CurrentStageID:  stages[i].StageID,
-				CurrentStage:    stages[i].Stage,
-				NextStage:       nextStageName,
-				Stages:          stages,
-			}, nil
+	index := 0
+	for index < len(stages) {
+		stageName := strings.ToLower(stages[index].Stage)
+		stageStatus := strings.ToLower(stages[index].Status)
+
+		// Jika stage = payment dan sudah terverifikasi, skip
+		if stageName == "payment" && team.TeamStatus == "terverifikasi" {
+			index++
+			continue
 		}
+
+		// Jika belum lolos, berarti current stage
+		if stageStatus != "lolos" {
+			break
+		}
+
+		index++
 	}
 
-	// Jika belum terverifikasi, maka current stage = pembayaran
-	if team.TeamStatus != "terverifikasi" {
-		currentStageName := "payment"
-		currentStageID := 0
-		nextStageName := ""
-		for i := 0; i < len(stages); i++ {
-			if strings.ToLower(stages[i].Stage) == "payment" && i+1 < len(stages) {
-				nextStageName = stages[i+1].Stage
-				break
-			}
-		}
-		return &model.TeamDetailProgress{
-			TeamCompetition: competition.CompetitionName,
-			PaymentStatus:   team.TeamStatus,
-			CurrentStageID:  currentStageID,
-			CurrentStage:    currentStageName,
-			NextStage:       nextStageName,
-			Stages:          stages,
-		}, nil
+	if index >= len(stages) {
+		index = len(stages) - 1
 	}
 
-	// Sudah diverifikasi dan tidak sedang diproses/tidak lolos
-	currentStage, err := t.SubmissionRepository.GetCurrentStage(team)
-	if errors.Is(err, gorm.ErrRecordNotFound) || currentStage.StageID == 0 {
-		firstStage, err := t.SubmissionRepository.GetFirstStage(team.CompetitionID)
-		if err != nil {
-			return nil, err
-		}
-		currentStageID := firstStage.StageID
-		currentStageName := firstStage.StageName
-
-		nextStageName := ""
-		nextStage, err := t.SubmissionRepository.GetNextStage(firstStage.StageID, team.CompetitionID)
-		if err == nil {
-			nextStageName = nextStage.StageName
-		}
-
-		return &model.TeamDetailProgress{
-			TeamCompetition: competition.CompetitionName,
-			PaymentStatus:   team.TeamStatus,
-			CurrentStageID:  currentStageID,
-			CurrentStage:    currentStageName,
-			NextStage:       nextStageName,
-			Stages:          stages,
-		}, nil
-	}
-
-	// Cek submission status
-	submission, err := t.SubmissionRepository.GetSubmission(&model.ReqFilterSubmission{
-		StageID: currentStage.StageID,
-		TeamID:  team.TeamID.String(),
-	})
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, err
-	}
-
-	var currentStageID int
-	var currentStageName string
-	var nextStageName string
-
-	if len(submission) > 0 && submission[0].Status == "lolos" {
-		nextStage, err := t.SubmissionRepository.GetNextStage(currentStage.StageID, team.CompetitionID)
-		if err == nil {
-			currentStageID = nextStage.StageID
-			currentStageName = nextStage.StageName
-
-			stageAfterNext, err := t.SubmissionRepository.GetNextStage(nextStage.StageID, team.CompetitionID)
-			if err == nil {
-				nextStageName = stageAfterNext.StageName
-			}
-		} else {
-			stageInfo, err := t.SubmissionRepository.GetStage(tx, currentStage.StageID)
-			if err != nil {
-				return nil, err
-			}
-			currentStageID = stageInfo.StageID
-			currentStageName = stageInfo.StageName
-		}
-	} else {
-		stageInfo, err := t.SubmissionRepository.GetStage(tx, currentStage.StageID)
-		if err != nil {
-			return nil, err
-		}
-		currentStageID = stageInfo.StageID
-		currentStageName = stageInfo.StageName
-
-		nextStage, err := t.SubmissionRepository.GetNextStage(currentStage.StageID, team.CompetitionID)
-		if err == nil {
-			nextStageName = nextStage.StageName
-		}
+	currentStage := stages[index]
+	nextStage := ""
+	if index+1 < len(stages) {
+		nextStage = stages[index+1].Stage
 	}
 
 	return &model.TeamDetailProgress{
 		TeamCompetition: competition.CompetitionName,
 		PaymentStatus:   team.TeamStatus,
-		CurrentStageID:  currentStageID,
-		CurrentStage:    currentStageName,
-		NextStage:       nextStageName,
+		CurrentStageID:  currentStage.StageID,
+		CurrentStage:    currentStage.Stage,
+		NextStage:       nextStage,
 		Stages:          stages,
 	}, nil
 }
