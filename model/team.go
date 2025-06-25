@@ -53,7 +53,7 @@ type GetTeamMembers struct {
 
 type ReqUpdateStatusTeam struct {
 	TeamID        string `json:"team_id"`
-	PaymentStatus string `json:"payment_status" binding:"oneof='belum terverifikasi' 'terverifikasi' 'ditolak'"`
+	PaymentStatus string `json:"payment_status" binding:"oneof='belum terverifikasi' 'terverifikasi' 'ditolak' 'diproses'"`
 }
 
 type TeamInfoResponseAdmin struct {
