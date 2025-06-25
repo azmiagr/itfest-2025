@@ -66,7 +66,7 @@ func (r *Rest) UploadPayment(c *gin.Context) {
 		return
 	}
 
-	publicURL, err := r.service.UserService.UploadPayment(user.UserID, paymentFile)
+	res, err := r.service.UserService.UploadPayment(user.UserID, paymentFile)
 	if err != nil {
 		if err.Error() == "file size exceeds maximum limit of 1MB" {
 			response.Error(c, http.StatusBadRequest, "please reduce the file size", err)
@@ -76,7 +76,7 @@ func (r *Rest) UploadPayment(c *gin.Context) {
 		}
 	}
 
-	response.Success(c, http.StatusOK, "success to upload payment", publicURL)
+	response.Success(c, http.StatusOK, "success to upload payment", res)
 
 }
 

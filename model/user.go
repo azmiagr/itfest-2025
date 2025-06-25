@@ -37,7 +37,7 @@ type CompetitionRegistrationRequest struct {
 	FullName      string `json:"full_name" binding:"required"`
 	StudentNumber string `json:"student_number" binding:"required"`
 	University    string `json:"university" binding:"required"`
-	PhoneNumber   string `json:"phone_number" binding:"required"`
+	PhoneNumber   string `json:"phone_number" binding:"required,min=10,max=15,numeric"`
 }
 
 type UpdateProfile struct {
@@ -45,7 +45,7 @@ type UpdateProfile struct {
 	StudentNumber string `json:"student_number"`
 	University    string `json:"university"`
 	Major         string `json:"major"`
-	PhoneNumber   string `json:"phone_number"`
+	PhoneNumber   string `json:"phone_number" binding:"min=10,max=15,numeric"`
 }
 
 type UserParam struct {
@@ -102,4 +102,8 @@ type GetUserPaymentStatus struct {
 type GetTotalParticipant struct {
 	TotalUIUX int `json:"total_uiux"`
 	TotalBP   int `json:"total_bp"`
+}
+
+type UploadPaymentResponse struct {
+	Status string `json:"status"`
 }
