@@ -44,6 +44,7 @@ type GetAllTeamsResponse struct {
 	University      string           `json:"university"`
 	PaymentStatus   string           `json:"payment_status"`
 	CompetitionName string           `json:"competition_name"`
+	CurrentStage    string           `json:"current_stage"`
 	TeamMembers     []GetTeamMembers `json:"team_members"`
 }
 

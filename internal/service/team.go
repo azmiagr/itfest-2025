@@ -188,7 +188,7 @@ func (t *TeamService) GetAllTeam() ([]*model.GetAllTeamsResponse, error) {
 				Name: x.MemberName,
 			})
 		}
-
+		dataCurrent, err := t.getProgress(v.Team.TeamID, true)
 		res = append(res, &model.GetAllTeamsResponse{
 			TeamID:          v.Team.TeamID.String(),
 			TeamName:        v.Team.TeamName,
@@ -196,6 +196,7 @@ func (t *TeamService) GetAllTeam() ([]*model.GetAllTeamsResponse, error) {
 			University:      v.University,
 			PaymentStatus:   v.Team.TeamStatus,
 			CompetitionName: competition.CompetitionName,
+			CurrentStage:    dataCurrent.CurrentStage,
 			TeamMembers:     teamMembers,
 		})
 	}
@@ -356,7 +357,7 @@ func (t *TeamService) getProgress(ID uuid.UUID, isAdmin bool) (*model.TeamDetail
 	team, err := t.TeamRepository.GetTeamByUserID(tx, ID)
 	if isAdmin {
 		team, err = t.TeamRepository.GetTeamByID(tx, ID)
-	} 
+	}
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) || team == nil {
