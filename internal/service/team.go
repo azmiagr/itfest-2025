@@ -183,12 +183,19 @@ func (t *TeamService) GetAllTeam() ([]*model.GetAllTeamsResponse, error) {
 		}
 
 		var teamMembers []model.GetTeamMembers
+		var dataStage model.TeamDetailProgress
+		dataStage.CurrentStage = "Tidak memiliki stage"
 		for _, x := range v.Team.TeamMembers {
 			teamMembers = append(teamMembers, model.GetTeamMembers{
 				Name: x.MemberName,
 			})
 		}
-
+		if v.Team.CompetitionID > 1 {
+			dataCurrent, _ := t.getProgress(v.Team.TeamID, true)
+			if err == nil {
+				dataStage.CurrentStage = dataCurrent.CurrentStage
+			}
+		}
 		res = append(res, &model.GetAllTeamsResponse{
 			TeamID:          v.Team.TeamID.String(),
 			TeamName:        v.Team.TeamName,
@@ -196,6 +203,7 @@ func (t *TeamService) GetAllTeam() ([]*model.GetAllTeamsResponse, error) {
 			University:      v.University,
 			PaymentStatus:   v.Team.TeamStatus,
 			CompetitionName: competition.CompetitionName,
+			CurrentStage:    dataStage.CurrentStage,
 			TeamMembers:     teamMembers,
 		})
 	}
@@ -356,7 +364,7 @@ func (t *TeamService) getProgress(ID uuid.UUID, isAdmin bool) (*model.TeamDetail
 	team, err := t.TeamRepository.GetTeamByUserID(tx, ID)
 	if isAdmin {
 		team, err = t.TeamRepository.GetTeamByID(tx, ID)
-	} 
+	}
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) || team == nil {
