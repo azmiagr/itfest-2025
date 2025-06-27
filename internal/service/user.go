@@ -42,6 +42,7 @@ type UserService struct {
 	db                    *gorm.DB
 	UserRepository        repository.IUserRepository
 	TeamRepository        repository.ITeamRepository
+	TeamService           ITeamService
 	OtpRepository         repository.IOtpRepository
 	CompetitionRepository repository.ICompetitionRepository
 	BCrypt                bcrypt.Interface
@@ -49,7 +50,7 @@ type UserService struct {
 	Supabase              supabase.Interface
 }
 
-func NewUserService(userRepository repository.IUserRepository, teamRepository repository.ITeamRepository, otpRepository repository.IOtpRepository, competitionRepository repository.ICompetitionRepository, bcrypt bcrypt.Interface, jwtAuth jwt.Interface, supabase supabase.Interface) IUserService {
+func NewUserService(userRepository repository.IUserRepository, teamRepository repository.ITeamRepository, otpRepository repository.IOtpRepository, competitionRepository repository.ICompetitionRepository, bcrypt bcrypt.Interface, jwtAuth jwt.Interface, supabase supabase.Interface, teamService ITeamService) IUserService {
 	return &UserService{
 		db:                    mariadb.Connection,
 		UserRepository:        userRepository,
@@ -59,6 +60,7 @@ func NewUserService(userRepository repository.IUserRepository, teamRepository re
 		BCrypt:                bcrypt,
 		JwtAuth:               jwtAuth,
 		Supabase:              supabase,
+		TeamService:           teamService,
 	}
 }
 
@@ -522,11 +524,26 @@ func (u *UserService) GetMyTeamProfile(userID uuid.UUID) (*model.UserTeamProfile
 		return nil, err
 	}
 
+	dl := time.Time{}
+	if team.CompetitionID > 1 {
+		stage, err := u.TeamService.GetProgressByUserID(userID)
+		if err == nil && stage != nil && len(stage.Stages) > 0 {
+			for _, s := range stage.Stages {
+				if s.StageID == stage.CurrentStageID {
+					dl = s.Deadline
+					break
+				}
+			}
+		} else {
+			return nil, err
+		}
+	}
+
 	TeamProfileResponse := &model.UserTeamProfile{
 		LeaderName:          user.FullName,
 		TeamName:            team.TeamName,
 		StudentNumber:       user.StudentNumber,
-		Deadline:            competititon.Deadline,
+		Deadline:            dl,
 		CompetitionCategory: competititon.CompetitionName,
 		Members:             memberResponse,
 	}
