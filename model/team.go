@@ -64,6 +64,7 @@ type TeamInfoResponseAdmin struct {
 	StudentNumber       string                `json:"student_number"`
 	PaymentStatus       string                `json:"payment_status"`
 	PaymentTransc       string                `json:"payment_transaction"`
+	StudentCard         string                `json:"student_card"`
 	Members             []TeamMembersResponse `json:"members"`
 	StageNow            StageNow              `json:"progress"`
 }
