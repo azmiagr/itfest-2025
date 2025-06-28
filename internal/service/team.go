@@ -275,6 +275,7 @@ func (t *TeamService) GetTeamByID(teamID uuid.UUID) (*model.TeamInfoResponseAdmi
 					PaymentTransc:       user.PaymentTransc,
 					StudentCard:         user.StudentCardLink,
 					Members:             memberResponse,
+					PhoneNumber:         user.PhoneNumber,
 					StageNow:            model.StageNow{},
 				}, nil
 			}
@@ -337,6 +338,7 @@ func (t *TeamService) GetTeamByID(teamID uuid.UUID) (*model.TeamInfoResponseAdmi
 		PaymentTransc:       user.PaymentTransc,
 		StudentCard:         user.StudentCardLink,
 		Members:             memberResponse,
+		PhoneNumber:         user.PhoneNumber,
 		StageNow: model.StageNow{
 			Stage:    stage.StageName,
 			Status:   submission,
