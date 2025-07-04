@@ -11,9 +11,16 @@ import (
 	"itfest-2025/pkg/middleware"
 	"itfest-2025/pkg/supabase"
 	"log"
+	"time"
 )
 
 func main() {
+	loc, err := time.LoadLocation("Asia/Jakarta")
+	if err != nil {
+		log.Fatal("Gagal load lokasi zona waktu:", err)
+	}
+	time.Local = loc
+	
 	config.LoadEnvironment()
 
 	db, err := mariadb.ConnectDatabase()
